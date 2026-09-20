@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+coverage
+playwright-report
+test-results
+package-lock.json
+supabase/.temp
+src/core/db/database.types.ts

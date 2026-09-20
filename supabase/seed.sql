@@ -1,0 +1,2 @@
+-- Reference data seed (boutiques, contract types, public holidays, default settings).
+-- Filled in Phase 1. Employees and PINs are NEVER seeded here: see scripts/seed-employees.ts.
