@@ -80,9 +80,8 @@ jobs:
         run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --yes
 
       - name: Régénérer les types TypeScript depuis la base réelle
-        run: |
-          npx supabase gen types typescript --linked --schema public > src/core/db/database.types.ts
-          npx prettier --write src/core/db/database.types.ts
+        # Fichier généré : il est listé dans .prettierignore et laissé tel quel.
+        run: npx supabase gen types typescript --linked --schema public > src/core/db/database.types.ts
 
       - name: Committer les types s'ils ont changé
         run: |
@@ -103,4 +102,10 @@ jobs:
       #   create extension if not exists pgtap with schema extensions;
       - name: Tests de sécurité (RLS)
         if: inputs.run_tests
-        run: npx supabase test db --linked --password "$SUPABASE_DB_PASSWORD" --yes
+        run: |
+          # `supabase test db` n'accepte pas --password : il lit SUPABASE_DB_PASSWORD
+          # depuis l'environnement, déjà exporté au niveau du job.
+          if ! npx supabase test db --linked --yes; then
+            echo "::error::Les tests de sécurité ont échoué. Si le message ci-dessus mentionne « pgtap » ou « function ... does not exist », l'extension n'est pas encore installée sur le projet : voir docs/DEPLOIEMENT.md, étape 5."
+            exit 1
+          fi
