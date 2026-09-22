@@ -28,6 +28,34 @@ test.describe("espaces protégés", () => {
     await page.goto("/admin/collaboratrices");
     await expect(page).toHaveURL(/\/admin\/connexion$/);
   });
+
+  // Le pointage et le planning tiennent les heures et les selfies de tout le
+  // monde : ils doivent être les premiers à fermer la porte à une visiteuse
+  // sans session, y compris quand la base est injoignable.
+  test("l'écran de pointage renvoie vers la connexion", async ({ page }) => {
+    await page.goto("/pointer");
+    await expect(page).toHaveURL(/\/connexion$/);
+  });
+
+  test("le planning de la collaboratrice renvoie vers la connexion", async ({ page }) => {
+    await page.goto("/planning");
+    await expect(page).toHaveURL(/\/connexion$/);
+  });
+
+  test("le planning de la direction renvoie vers sa connexion", async ({ page }) => {
+    await page.goto("/admin/planning");
+    await expect(page).toHaveURL(/\/admin\/connexion$/);
+  });
+
+  test("la présence du jour renvoie vers sa connexion", async ({ page }) => {
+    await page.goto("/admin/pointage");
+    await expect(page).toHaveURL(/\/admin\/connexion$/);
+  });
+
+  test("l'historique des pointages renvoie vers sa connexion", async ({ page }) => {
+    await page.goto("/admin/pointage/historique");
+    await expect(page).toHaveURL(/\/admin\/connexion$/);
+  });
 });
 
 test.describe("écran de connexion collaboratrice", () => {

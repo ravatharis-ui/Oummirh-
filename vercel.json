@@ -4,6 +4,14 @@
     {
       "path": "/api/events/dispatch",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/pointage",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/selfies",
+      "schedule": "30 21 * * *"
     }
   ]
 }

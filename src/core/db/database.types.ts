@@ -307,6 +307,148 @@ export type Database = {
         }
         Relationships: []
       }
+      planning_entries: {
+        Row: {
+          boutique_id: string
+          break_end: string | null
+          break_start: string | null
+          created_at: string
+          date: string
+          employee_id: string
+          end_time: string | null
+          id: string
+          note: string | null
+          source: string
+          source_ref: string | null
+          start_time: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          boutique_id: string
+          break_end?: string | null
+          break_start?: string | null
+          created_at?: string
+          date: string
+          employee_id: string
+          end_time?: string | null
+          id?: string
+          note?: string | null
+          source?: string
+          source_ref?: string | null
+          start_time?: string | null
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          boutique_id?: string
+          break_end?: string | null
+          break_start?: string | null
+          created_at?: string
+          date?: string
+          employee_id?: string
+          end_time?: string | null
+          id?: string
+          note?: string | null
+          source?: string
+          source_ref?: string | null
+          start_time?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_entries_boutique_id_fkey"
+            columns: ["boutique_id"]
+            isOneToOne: false
+            referencedRelation: "boutiques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planning_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_templates: {
+        Row: {
+          break_end: string | null
+          break_start: string | null
+          created_at: string
+          employee_id: string
+          end_time: string | null
+          id: string
+          start_time: string | null
+          status: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          break_end?: string | null
+          break_start?: string | null
+          created_at?: string
+          employee_id: string
+          end_time?: string | null
+          id?: string
+          start_time?: string | null
+          status: string
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          break_end?: string | null
+          break_start?: string | null
+          created_at?: string
+          employee_id?: string
+          end_time?: string | null
+          id?: string
+          start_time?: string | null
+          status?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_templates_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pointage_alerts: {
+        Row: {
+          created_at: string
+          employee_id: string
+          kind: string
+          local_date: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          kind: string
+          local_date: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          kind?: string
+          local_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pointage_alerts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_holidays: {
         Row: {
           created_at: string
@@ -349,6 +491,69 @@ export type Database = {
         }
         Relationships: []
       }
+      time_clocks: {
+        Row: {
+          boutique_id: string
+          corrected_by: string | null
+          correction_reason: string | null
+          created_at: string
+          delta_minutes: number | null
+          employee_id: string
+          event_type: string
+          id: string
+          is_correction: boolean
+          local_date: string
+          occurred_at: string
+          photo_path: string | null
+          planned_time: string | null
+        }
+        Insert: {
+          boutique_id: string
+          corrected_by?: string | null
+          correction_reason?: string | null
+          created_at?: string
+          delta_minutes?: number | null
+          employee_id: string
+          event_type: string
+          id?: string
+          is_correction?: boolean
+          local_date: string
+          occurred_at?: string
+          photo_path?: string | null
+          planned_time?: string | null
+        }
+        Update: {
+          boutique_id?: string
+          corrected_by?: string | null
+          correction_reason?: string | null
+          created_at?: string
+          delta_minutes?: number | null
+          employee_id?: string
+          event_type?: string
+          id?: string
+          is_correction?: boolean
+          local_date?: string
+          occurred_at?: string
+          photo_path?: string | null
+          planned_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_clocks_boutique_id_fkey"
+            columns: ["boutique_id"]
+            isOneToOne: false
+            referencedRelation: "boutiques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clocks_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           boutique_id: string | null
@@ -380,9 +585,138 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      daily_worked_time: {
+        Row: {
+          arrival_delta_minutes: number | null
+          boutique_id: string | null
+          break_end_at: string | null
+          break_start_at: string | null
+          clock_in_at: string | null
+          clock_out_at: string | null
+          employee_id: string | null
+          is_open: boolean | null
+          local_date: string | null
+          worked_minutes: number | null
+        }
+        Relationships: []
+      }
+      effective_time_clocks: {
+        Row: {
+          boutique_id: string | null
+          correction_reason: string | null
+          delta_minutes: number | null
+          employee_id: string | null
+          event_type: string | null
+          id: string | null
+          is_correction: boolean | null
+          local_date: string | null
+          occurred_at: string | null
+          photo_path: string | null
+          planned_time: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      admin_apply_planning_template: {
+        Args: { p_employee_id: string; p_overwrite?: boolean; p_week_start: string }
+        Returns: number
+      }
+      admin_correct_time_clock: {
+        Args: {
+          p_employee_id: string
+          p_event_type: string
+          p_local_date: string
+          p_occurred_at: string
+          p_reason: string
+        }
+        Returns: string
+      }
+      admin_delete_planning_entry: {
+        Args: { p_date: string; p_employee_id: string }
+        Returns: boolean
+      }
+      admin_duplicate_planning_week: {
+        Args: {
+          p_employee_ids?: string[]
+          p_source_monday: string
+          p_target_monday: string
+        }
+        Returns: number
+      }
+      admin_upsert_planning_entry: {
+        Args: {
+          p_boutique_id?: string
+          p_break_end?: string
+          p_break_start?: string
+          p_date: string
+          p_employee_id: string
+          p_end_time?: string
+          p_note?: string
+          p_start_time?: string
+          p_status: string
+        }
+        Returns: string
+      }
+      apply_planning_from_event: {
+        Args: {
+          p_boutique_id?: string
+          p_break_end?: string
+          p_break_start?: string
+          p_employee_id: string
+          p_end_time?: string
+          p_from: string
+          p_source: string
+          p_source_ref: string
+          p_start_time?: string
+          p_status: string
+          p_to: string
+        }
+        Returns: number
+      }
+      clear_planning_from_event: {
+        Args: { p_source: string; p_source_ref: string }
+        Returns: number
+      }
+      clock_event: {
+        Args: { p_event_type: string; p_photo_path?: string }
+        Returns: {
+          boutique_id: string
+          corrected_by: string | null
+          correction_reason: string | null
+          created_at: string
+          delta_minutes: number | null
+          employee_id: string
+          event_type: string
+          id: string
+          is_correction: boolean
+          local_date: string
+          occurred_at: string
+          photo_path: string | null
+          planned_time: string | null
+        }
+      }
+      mark_selfies_purged: { Args: { p_paths: string[] }; Returns: number }
+      my_boutique_presence: {
+        Args: { p_date: string }
+        Returns: {
+          display_name: string
+          employee_id: string
+          end_time: string
+          start_time: string
+        }[]
+      }
+      planning_announce: {
+        Args: { p_dates: string[]; p_employee_id: string }
+        Returns: undefined
+      }
+      planning_protected_sources: { Args: never; Returns: string[] }
+      pointage_run_checks: { Args: { p_at?: string }; Returns: Json }
+      reunion_today: { Args: never; Returns: string }
+      selfies_to_purge: {
+        Args: { p_limit?: number }
+        Returns: { photo_path: string }[]
+      }
       admin_create_employee: {
         Args: {
           p_auth_user_id: string

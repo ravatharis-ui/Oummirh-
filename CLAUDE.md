@@ -254,3 +254,65 @@ l'onglet Actions de GitHub, ou l'interface Vercel.
   - Emails rangés dans `src/core/notifications/emails/` plutôt qu'à la racine comme le prévoit
     PROMPT.md §3.1 : tout reste sous `src/`, donc sous les règles d'architecture et l'alias `@/`,
     et cohérent avec les emails propres aux modules.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+
+- **Phases 4 et 5** (planning puis pointage — l'ordre compte : le planning fournit les heures
+  attendues que le pointage compare) :
+  - **`reunion_today()`** : toute règle métier qui dépend d'« aujourd'hui » passe par cette
+    fonction SQL. Ni l'horloge du téléphone, ni celle du serveur d'application.
+  - **`planning_entries.source`** dit qui a posé la ligne. `leave`, `replacement` et `swap` sont
+    **protégées** : une duplication de semaine et une semaine type ne les copient ni ne les
+    écrasent. `planning_protected_sources()` est la liste, en un seul endroit.
+  - **Un seul événement `planning.entry_changed`**, avec un tableau `dates`. Sept journées
+    modifiées font une notification, pas sept. Et **rien n'est annoncé pour une date passée** :
+    corriger le planning d'avant-hier n'a personne à prévenir.
+  - **Une saisie manuelle de la direction écrase tout, congé compris.** Le contraire ferait du
+    module congés l'arbitre du planning. La saisie détache alors la journée de sa demande
+    d'origine, et l'interface le dit avant de laisser cliquer.
+  - **`my_boutique_presence(date)`** ne renvoie que les collègues **présentes**. Le motif d'une
+    absence — maladie surtout — ne regarde pas les collègues, et la fonction est écrite pour
+    qu'il soit impossible de le déduire par soustraction.
+  - **`time_clocks` n'a aucune politique d'insert, d'update ni de delete, pour personne.** Tout
+    passe par `clock_event` ou `admin_correct_time_clock`. Une correction est une **nouvelle
+    ligne** ; l'originale n'est jamais réécrite. `effective_time_clocks` montre le dernier mot
+    (`distinct on … order by created_at desc`), la table garde toute la conversation.
+  - **Un selfie ne sert qu'une fois** : index unique partiel `time_clocks_photo_once`, en plus
+    de la vérification dans la fonction. Un index, et pas seulement un `if exists`, parce que
+    deux appels simultanés passeraient la vérification ensemble.
+  - **Journée de travail et non journée calendaire** : `local_date` reste celle qui s'est
+    ouverte, pour qu'un départ pointé après minuit ne bascule pas au lendemain. Mais une
+    journée laissée ouverte plus de vingt-quatre heures n'absorbe pas l'arrivée du surlendemain.
+  - **`pointage_run_checks(p_at)`** accepte un instant. Ce n'est pas une heure venue d'un client
+    — la fonction n'est appelable que par `service_role` — mais sans lui, un test des alertes ne
+    passerait qu'entre 7 h et 20 h, heure de La Réunion.
+  - **`pointage_alerts`** (clé primaire `(employee_id, local_date, kind)`) est ce qui fait qu'une
+    tâche qui tourne toutes les dix minutes n'alerte qu'une fois. Les alertes vont à la
+    direction, jamais à la collaboratrice : dire à quelqu'un qu'il est en retard est une
+    conversation, pas une notification.
+  - **La purge des selfies est en deux temps** : Postgres ne sait pas supprimer un fichier du
+    stockage. `selfies_to_purge()` dit quoi supprimer, la route cron appelle l'API Storage, puis
+    `mark_selfies_purged()` oublie les chemins. Interrompue au milieu, la passe suivante reprend
+    le même travail. Le pointage, lui, n'est jamais supprimé.
+  - **Le bucket `selfies` et ses politiques sont créés dans un bloc `exception when
+insufficient_privilege`.** Sur un projet hébergé, `storage.objects` n'appartient pas toujours
+    au rôle qui applique les migrations, et un refus ferait échouer `db push` en entier — donc le
+    seul chemin de mise à jour de la base dont dispose le propriétaire.
+  - **Pas de pointage différé hors réseau.** L'écran le dit et invite à prévenir la direction.
+    Mettre un pointage en file d'attente reviendrait à accepter une heure du client.
+  - **La photo vient de `getUserMedia`, jamais d'un `<input type="file">`**, qui ouvrirait la
+    galerie. Réduite à 720 px et compressée à 0,7 dans le navigateur, avant tout envoi.
+  - **Les filtres et la navigation de semaine passent par des formulaires GET et des `UrlObject`**
+    plutôt que par des chaînes : `typedRoutes` vérifie le chemin, et le filtre fonctionne même si
+    le JavaScript ne charge jamais.
+  - Le banc d'essai hors ligne émule désormais `storage.buckets`, `storage.objects` et
+    `storage.foldername()` : une migration qui touche au stockage doit être vérifiable sans
+    Supabase.

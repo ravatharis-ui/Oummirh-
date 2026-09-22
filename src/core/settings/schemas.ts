@@ -29,6 +29,12 @@ export const leaveRulesSchema = z.object({
   carry_over: z.boolean(),
 });
 
+/** Fenêtre horaire des vérifications de pointage, en heure de La Réunion. */
+export const clockCheckWindowSchema = z.object({
+  start: z.string().regex(timePattern),
+  end: z.string().regex(timePattern),
+});
+
 export const settingsSchema = {
   company_name: z.string().min(1),
   timezone: z.string().min(1),
@@ -36,6 +42,9 @@ export const settingsSchema = {
   leave_rules: leaveRulesSchema,
   late_tolerance_minutes: z.number().int().min(0),
   selfie_retention_days: z.number().int().positive(),
+  selfie_required: z.boolean(),
+  missing_clock_out_delay_minutes: z.number().int().positive(),
+  clock_check_window: clockCheckWindowSchema,
   overtime_recovery_min_step_minutes: z.number().int().positive(),
   modules_enabled: z.record(z.string(), z.boolean()),
 } as const;
@@ -59,6 +68,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   late_tolerance_minutes: 10,
   selfie_retention_days: 60,
+  selfie_required: true,
+  missing_clock_out_delay_minutes: 60,
+  clock_check_window: { start: "07:00", end: "20:00" },
   overtime_recovery_min_step_minutes: 15,
   modules_enabled: {},
 };

@@ -236,6 +236,53 @@ de Vercel, les tâches planifiées sont limitées à une fois par jour : changez
 
 ---
 
+## Étape 8 — Planning et pointage
+
+Rien à installer : les tables, le bucket des selfies et les tâches planifiées arrivent avec le
+code. Il suffit de relancer le bouton **« Base de données »** de l'étape 3 après le déploiement.
+
+### Vérifier le planning
+
+1. Espace direction → **Planning**. Vous voyez la semaine en cours, une ligne par collaboratrice.
+2. Cliquez sur une case : le panneau s'ouvre. Cliquez sur **« Journée standard »**, puis
+   **Enregistrer**. La case se remplit et le total de la ligne change.
+3. Cliquez sur **« Copier la semaine précédente »**. Le message vous dit combien de journées ont
+   été copiées — et rappelle que les congés déjà posés n'ont pas été touchés.
+4. **Imprimer** ouvre un onglet prêt pour du A4 paysage.
+5. Sur le téléphone d'une collaboratrice : **Planning** montre sa semaine et, en haut, les
+   collègues présentes aujourd'hui dans sa boutique.
+
+### Vérifier le pointage
+
+1. Sur le téléphone, onglet **Pointer**. Un seul gros bouton : « Je commence ».
+2. Le navigateur demande l'accès à la caméra — c'est normal, et c'est la caméra frontale
+   uniquement. Autorisez, cadrez, validez.
+3. L'écran de confirmation affiche **l'heure renvoyée par le serveur**, pas celle du téléphone,
+   et le téléphone vibre brièvement.
+4. Le bouton devient « Je pars en pause », puis « Je reprends », puis « Je termine ».
+5. Espace direction → **Pointage** : la ligne se met à jour toute seule, sans recharger.
+6. **Historique et corrections** → bouton **Corriger** : la correction demande un motif. Le
+   pointage d'origine reste en base, la ligne porte la mention « corrigé ».
+
+### Ce qui tourne tout seul
+
+| Quand                       | Ce qui se passe                                   |
+| --------------------------- | ------------------------------------------------- |
+| Toutes les 10 min, 7 h–20 h | Alerte si une arrivée prévue n'a pas été pointée. |
+| 1 h après l'heure de fin    | Alerte si le départ n'a pas été pointé.           |
+| Chaque nuit                 | Suppression des selfies de plus de 60 jours.      |
+
+Les alertes arrivent dans **votre** cloche, pas dans celle de la collaboratrice. Un jour d'école,
+de repos, de congé ou de maladie ne déclenche jamais d'alerte.
+
+### Si le journal du workflow affiche un avertissement « bucket selfies »
+
+Cela veut dire que la base n'a pas eu le droit de créer le bucket toute seule. Dans le tableau de
+bord Supabase : `Storage` → **New bucket** → nom `selfies`, laissez **Public** décoché →
+**Create**. Tout le reste est déjà en place.
+
+---
+
 ## Ce qui se passe ensuite
 
 À chaque phase terminée, le déroulé est toujours le même :

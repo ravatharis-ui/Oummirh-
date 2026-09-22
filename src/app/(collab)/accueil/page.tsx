@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { requireEmployee } from "@/core/auth";
 import { createServerSupabaseClient } from "@/core/db/server";
 
+import { Button } from "@/core/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/core/ui/card";
 
 import { getRegistry } from "../../registry";
@@ -26,11 +28,16 @@ export default async function CollabHomePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Pointage</CardTitle>
-          <CardDescription>Le bouton de pointage arrive en Phase 4.</CardDescription>
+          <CardTitle className="text-base">Ta journée</CardTitle>
+          <CardDescription>Pointe ton arrivée, ta pause et ton départ.</CardDescription>
         </CardHeader>
-        <CardContent className="text-muted-foreground text-base">
-          Votre planning, vos soldes et vos demandes s&apos;afficheront ici.
+        <CardContent className="flex flex-col gap-3">
+          <Button size="lg" asChild>
+            <Link href="/pointer">Pointer</Link>
+          </Button>
+          <Button variant="outline" size="lg" asChild>
+            <Link href="/planning">Voir mon planning</Link>
+          </Button>
         </CardContent>
       </Card>
 

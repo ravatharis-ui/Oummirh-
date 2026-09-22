@@ -26,6 +26,9 @@ const validRows: SettingRow[] = [
   },
   { key: "late_tolerance_minutes", value: 15 },
   { key: "selfie_retention_days", value: 30 },
+  { key: "selfie_required", value: false },
+  { key: "missing_clock_out_delay_minutes", value: 90 },
+  { key: "clock_check_window", value: { start: "06:30", end: "21:00" } },
   { key: "overtime_recovery_min_step_minutes", value: 15 },
   { key: "modules_enabled", value: { conges: true, swaps: false } },
 ];
