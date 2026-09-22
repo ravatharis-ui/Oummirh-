@@ -1,5 +1,5 @@
 -- =============================================================================
--- 0002_core_reference_data — sales outlets, contract types, settings, holidays.
+-- 20260922070100_core_reference_data — sales outlets, contract types, settings, holidays.
 --
 -- Reference data lives in a migration rather than in supabase/seed.sql because
 -- the project is developed against a hosted Supabase project: `supabase db push`

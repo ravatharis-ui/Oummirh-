@@ -1,5 +1,5 @@
 -- =============================================================================
--- 0001_core_schema — Oummi RH core foundation
+-- 20260922070000_core_schema — Oummi RH core foundation
 --
 -- Creates the shared tables every module builds on: sales outlets, contract
 -- types, roles, settings, public holidays, the domain-event outbox, in-app

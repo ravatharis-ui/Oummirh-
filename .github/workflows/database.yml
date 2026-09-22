@@ -1,0 +1,91 @@
+# Applique les migrations au projet Supabase hébergé, sans rien installer en local.
+#
+# Déclenchement manuel : onglet « Actions » → « Base de données » → « Run workflow ».
+# Déclenchement automatique : dès qu'un fichier de supabase/migrations/ est poussé.
+#
+# Secrets à créer une fois (Settings → Secrets and variables → Actions) :
+#   SUPABASE_ACCESS_TOKEN  jeton personnel — https://supabase.com/dashboard/account/tokens
+#   SUPABASE_PROJECT_REF   référence du projet (Project Settings → General)
+#   SUPABASE_DB_PASSWORD   mot de passe de la base (Project Settings → Database)
+name: Base de données
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: "Lancer les tests de sécurité (RLS) après la mise à jour"
+        type: boolean
+        default: true
+  push:
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/database.yml"
+
+# Deux mises à jour de schéma en parallèle se marcheraient dessus.
+concurrency:
+  group: database
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Appliquer les migrations
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Vérifier que les secrets sont configurés
+        run: |
+          missing=""
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || missing="$missing SUPABASE_ACCESS_TOKEN"
+          [ -n "$SUPABASE_DB_PASSWORD" ] || missing="$missing SUPABASE_DB_PASSWORD"
+          [ -n "$SUPABASE_PROJECT_REF" ] || missing="$missing SUPABASE_PROJECT_REF"
+          if [ -n "$missing" ]; then
+            echo "::error::Secrets manquants :$missing — voir docs/DEPLOIEMENT.md, étape 2."
+            exit 1
+          fi
+
+      - name: Relier le projet Supabase
+        run: npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
+
+      - name: Aperçu des migrations à appliquer
+        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --dry-run --yes
+
+      - name: Appliquer les migrations
+        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --yes
+
+      - name: Régénérer les types TypeScript depuis la base réelle
+        run: |
+          npx supabase gen types typescript --linked --schema public > src/core/db/database.types.ts
+          npx prettier --write src/core/db/database.types.ts
+
+      - name: Committer les types s'ils ont changé
+        run: |
+          if git diff --quiet -- src/core/db/database.types.ts; then
+            echo "Types inchangés : le code correspond déjà à la base."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add src/core/db/database.types.ts
+            git commit -m "chore(db): régénère les types depuis la base [skip ci]"
+            git push
+          fi
+
+      - name: Vérifier que le code compile avec les types réels
+        run: npm run typecheck
+
+      # Nécessite l'extension pgTAP, installée une fois depuis l'éditeur SQL :
+      #   create extension if not exists pgtap with schema extensions;
+      - name: Tests de sécurité (RLS)
+        if: inputs.run_tests
+        run: npx supabase test db --linked --password "$SUPABASE_DB_PASSWORD" --yes

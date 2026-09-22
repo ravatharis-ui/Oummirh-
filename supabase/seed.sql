@@ -1,7 +1,7 @@
 -- Local development seed (`supabase db reset`) only.
 --
 -- Reference data (boutiques, contract types, settings, public holidays) lives in
--- supabase/migrations/0002_core_reference_data.sql so that it also reaches a
+-- supabase/migrations/20260922070100_core_reference_data.sql so that it also reaches a
 -- hosted project through `supabase db push`. Employees and PINs are NEVER seeded
 -- here: see scripts/seed-employees.ts, which writes generated PINs once to
 -- seed-output/pins.csv (gitignored).

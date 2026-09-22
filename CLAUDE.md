@@ -123,8 +123,18 @@ npm run test:db        # tests pgTAP sur le projet relié (extension pgtap requi
 npm run db:start       # variante locale, Docker requis (db:reset, db:types:local, test:db:local)
 ```
 
-Le projet cible une base **Supabase hébergée**, pas une base locale : les commandes par défaut
-utilisent `--linked`. Les variantes `:local` restent disponibles pour qui a Docker.
+Le projet est **entièrement hébergé** : Supabase pour la base, Vercel pour l'application, GitHub
+Actions pour les migrations. Le propriétaire ne fait rien tourner en local. Les commandes `db:*`
+utilisent `--linked` ; les variantes `:local` restent disponibles pour qui a Docker.
+
+Côté propriétaire, tout passe par le navigateur : le workflow **« Base de données »**
+(`.github/workflows/database.yml`, déclenchable depuis l'onglet Actions) relie le projet, applique
+les migrations, régénère `database.types.ts` et le committe, puis lance les tests pgTAP. Voir
+`docs/DEPLOIEMENT.md`.
+
+**Conséquence pour le développement** : ne jamais demander au propriétaire d'installer Docker,
+Node ou la CLI. Toute étape manuelle doit être réalisable depuis le tableau de bord Supabase,
+l'onglet Actions de GitHub, ou l'interface Vercel.
 
 ## Journal des décisions d'architecture
 
@@ -136,7 +146,7 @@ utilisent `--linked`. Les variantes `:local` restent disponibles pour qui a Dock
     Postgres (une colonne de PK ne peut pas être nullable). Remplacée par
     `unique nulls not distinct`, avec un `check` : `manager` est rattaché à une boutique,
     `employee` et `admin` sont globaux.
-  - **Données de référence dans une migration** (`0002_core_reference_data.sql`), pas dans
+  - **Données de référence dans une migration** (la seconde migration), pas dans
     `seed.sql` : `supabase db push` n'exécute pas `seed.sql`, et `db reset` détruirait les données
     d'un projet hébergé. Toutes les insertions sont idempotentes (`on conflict do nothing`).
   - `anon` n'a **aucun droit** sur le schéma public. Les écrans d'avant-connexion (liste des
@@ -156,3 +166,11 @@ utilisent `--linked`. Les variantes `:local` restent disponibles pour qui a Dock
     transmettre les entrées de menu aux shells clients (une référence de composant et une fonction
     ne traversent pas la frontière).
   - Le middleware de rafraîchissement de session est reporté en Phase 2, avec l'authentification.
+  - **Nommage des migrations** : format horodaté `AAAAMMJJHHMMSS_<module>_...sql`, celui que
+    `supabase migration new` génère, au lieu du `NNNN_` de PROMPT.md. Le préfixe numérique court
+    n'est pas garanti par la CLI, et un `db push` refusé bloquerait le seul chemin de mise à jour
+    de la base dont dispose le propriétaire.
+  - **Zéro local** : les migrations sont appliquées par GitHub Actions, pas depuis un poste. Le
+    workflow régénère aussi `database.types.ts` depuis la base réelle et le committe, puis relance
+    `typecheck` : une dérive entre le code et la base casse le workflow au lieu de passer inaperçue.
+  - Les secrets ne sont jamais interpolés dans un `run:` de workflow ; ils transitent par `env`.
