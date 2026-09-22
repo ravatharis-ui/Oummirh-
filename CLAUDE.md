@@ -121,7 +121,16 @@ npm run db:push        # applique les migrations au projet relié
 npm run db:types       # régénère src/core/db/database.types.ts depuis le projet relié
 npm run test:db        # tests pgTAP sur le projet relié (extension pgtap requise)
 npm run db:start       # variante locale, Docker requis (db:reset, db:types:local, test:db:local)
+
+./scripts/offline-db-check/run.sh   # rejoue migrations + suite pgTAP sur un Postgres local jetable
 ```
+
+**Avant de livrer une migration ou un test SQL**, lancer `scripts/offline-db-check/run.sh`.
+Il applique les migrations, vérifie que les données de référence ne se dupliquent pas au rejeu,
+et exécute la suite pgTAP via un simulateur minimal — sans Docker, sans Supabase, sans l'extension
+pgtap. Un fichier de test SQL jamais exécuté est un fichier de test faux : deux bugs
+(`--password` refusé par `supabase test db`, CTE modifiante imbriquée) ont atteint le propriétaire
+avant que ce banc d'essai existe.
 
 Le projet est **entièrement hébergé** : Supabase pour la base, Vercel pour l'application, GitHub
 Actions pour les migrations. Le propriétaire ne fait rien tourner en local. Les commandes `db:*`

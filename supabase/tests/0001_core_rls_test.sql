@@ -105,27 +105,34 @@ select throws_ok(
 );
 
 -- Marking as read is the one write she is allowed, and only on her own rows.
+--
+-- The updates run as the collaboratrice, then the assertions run without the role.
+-- Postgres rejects a data-modifying WITH nested inside a subquery, and checking
+-- afterwards is the stronger test anyway: she cannot see her colleague's row, so
+-- only a privileged read can prove it was left untouched.
+update public.notifications set read_at = now()
+ where recipient_user_id = '11111111-1111-1111-1111-111111111111';
+
+update public.notifications set read_at = now()
+ where recipient_user_id = '22222222-2222-2222-2222-222222222222';
+
+reset role;
+
 select is(
-  (with upd as (
-     update public.notifications set read_at = now()
-      where recipient_user_id = '11111111-1111-1111-1111-111111111111'
-      returning 1)
-   select count(*) from upd),
+  (select count(*) from public.notifications
+    where recipient_user_id = '11111111-1111-1111-1111-111111111111'
+      and read_at is not null),
   1::bigint,
   'Une collaboratrice marque sa notification comme lue'
 );
 
 select is(
-  (with upd as (
-     update public.notifications set read_at = now()
-      where recipient_user_id = '22222222-2222-2222-2222-222222222222'
-      returning 1)
-   select count(*) from upd),
+  (select count(*) from public.notifications
+    where recipient_user_id = '22222222-2222-2222-2222-222222222222'
+      and read_at is not null),
   0::bigint,
   'Une collaboratrice ne touche pas la notification d''une collègue'
 );
-
-reset role;
 
 -- ------------------------------------------------------ what the direction sees --
 set local role authenticated;
