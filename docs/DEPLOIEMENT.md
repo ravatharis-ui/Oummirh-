@@ -106,7 +106,19 @@ dont le 20 décembre.
 | `SUPABASE_SERVICE_ROLE_KEY`     | la clé `service_role`                                                  |
 | `APP_URL`                       | `https://oummirh.vercel.app` (à corriger après le premier déploiement) |
 
-5. Cliquez sur **`Deploy`**, puis patientez.
+5. **Important — le type de chaque variable.** Vercel propose `Secret` ou `Config` :
+
+| Variable                        | Type à choisir | Pourquoi                                                                                                                                               |
+| ------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`      | **Config**     | les variables `NEXT_PUBLIC_` doivent être lisibles pendant la construction du site ; en `Secret` elles sont invisibles et l'application tombe en panne |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Config**     | idem. Cette clé part de toute façon dans le navigateur : la marquer secrète ne protège rien                                                            |
+| `SUPABASE_SERVICE_ROLE_KEY`     | **Secret**     | ne doit jamais sortir du serveur                                                                                                                       |
+| `APP_URL`                       | **Config**     | simple adresse publique                                                                                                                                |
+
+Une variable déjà enregistrée en `Secret` ne peut pas être convertie : supprimez-la et
+recréez-la en `Config`.
+
+6. Cliquez sur **`Deploy`**, puis patientez.
 
 Vercel vous donne une adresse du type `https://oummirh.vercel.app`. Revenez dans
 `Settings` → `Environment Variables` pour corriger `APP_URL` avec l'adresse réelle, puis

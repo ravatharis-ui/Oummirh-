@@ -16,36 +16,35 @@ import { getPublicEnv } from "@/core/env";
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  let env;
+  // Everything below is wrapped. This runs before every single route, so a throw
+  // here is not one broken page: it is the whole site answering with a platform
+  // error. Refreshing a token is a convenience, and failing to refresh one must
+  // never be worse than not trying.
   try {
-    env = getPublicEnv();
-  } catch {
-    // Not configured yet: serve the page so the reader sees a real message
-    // rather than a platform error on every route.
-    return response;
-  }
+    const env = getPublicEnv();
 
-  const supabase = createServerClient(
-    env.NEXT_PUBLIC_SUPABASE_URL,
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (cookiesToSet) => {
-          for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
-          response = NextResponse.next({ request });
-          for (const { name, value, options } of cookiesToSet) {
-            response.cookies.set(name, value, options);
-          }
+    const supabase = createServerClient(
+      env.NEXT_PUBLIC_SUPABASE_URL,
+      env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: (cookiesToSet) => {
+            for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
+            response = NextResponse.next({ request });
+            for (const { name, value, options } of cookiesToSet) {
+              response.cookies.set(name, value, options);
+            }
+          },
         },
       },
-    },
-  );
+    );
 
-  try {
     await supabase.auth.getUser();
-  } catch {
-    // A transient Auth outage must not take the whole site down.
+  } catch (cause) {
+    console.error(
+      `[middleware] Rafraîchissement de session ignoré : ${cause instanceof Error ? cause.message : cause}`,
+    );
   }
 
   return response;

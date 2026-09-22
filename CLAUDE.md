@@ -209,6 +209,14 @@ l'onglet Actions de GitHub, ou l'interface Vercel.
     `/admin/collaboratrices`, où il s'affiche une fois. Un fichier de codes est une charge, pas un
     service. `WRITE_PINS_CSV=1` reste possible en local.
   - Avant toute livraison SQL : `./scripts/offline-db-check/run.sh`.
+  - **Sur Vercel, les variables `NEXT_PUBLIC_` doivent être de type `Config`, jamais `Secret`.**
+    Next les inline à la construction ; une variable `Secret` n'est pas lisible à ce moment-là,
+    et l'application se déploie sans savoir joindre Supabase.
+  - **Le middleware ne doit jamais lever d'exception** : il s'exécute avant chaque route, donc un
+    throw n'est pas une page cassée mais tout le site en erreur. Son corps entier est sous
+    `try/catch`, et rafraîchir un jeton reste un confort.
+  - `error.tsx` et `global-error.tsx` remplacent la page d'erreur de la plateforme par un message
+    en français et la référence technique, seule piste vers le journal serveur.
   - **Toute nouvelle fonction SQL naît appelable par `anon`.** Supabase applique
     `alter default privileges ... grant all on functions to anon, authenticated`, et un
     `revoke ... from public` ne défait pas une autorisation accordée nommément à un rôle.

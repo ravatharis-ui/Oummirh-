@@ -201,12 +201,25 @@ async function main(): Promise<void> {
     console.log("   créé");
   }
 
-  const { error: roleError } = await admin
+  // Not an upsert: `user_roles` has no primary key, only a UNIQUE ... NULLS NOT
+  // DISTINCT constraint, so PostgREST cannot infer a conflict target and falls
+  // back to a plain insert, which fails the second time the script runs.
+  const { data: existingRole } = await admin
     .from("user_roles")
-    .upsert({ user_id: adminUserId, role: "admin", boutique_id: null });
-  if (roleError) {
-    console.error(`✗ Attribution du rôle admin impossible : ${roleError.message}`);
-    process.exit(1);
+    .select("user_id")
+    .eq("user_id", adminUserId)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (!existingRole) {
+    const { error: roleError } = await admin
+      .from("user_roles")
+      .insert({ user_id: adminUserId, role: "admin", boutique_id: null });
+    if (roleError) {
+      console.error(`✗ Attribution du rôle admin impossible : ${roleError.message}`);
+      process.exit(1);
+    }
+    console.log("   rôle administrateur accordé");
   }
 
   // --- Sign in as the direction ----------------------------------------------
