@@ -19,7 +19,6 @@ on:
   push:
     paths:
       - "supabase/migrations/**"
-      - ".github/workflows/database.yml"
 
 # Deux mises à jour de schéma en parallèle se marcheraient dessus.
 concurrency:
@@ -54,6 +53,22 @@ jobs:
             echo "::error::Secrets manquants :$missing — voir docs/DEPLOIEMENT.md, étape 2."
             exit 1
           fi
+
+          # Le jeton personnel et les clés du projet se confondent facilement.
+          case "$SUPABASE_ACCESS_TOKEN" in
+            sbp_*) ;;
+            *)
+              echo "::error::SUPABASE_ACCESS_TOKEN n'est pas un jeton personnel : il doit commencer par sbp_. Vous avez probablement collé la clé anon ou service_role, qui vont dans Vercel et non dans GitHub. Créez le bon jeton depuis l'avatar Supabase en haut à droite → Account Preferences → Access Tokens. Voir docs/DEPLOIEMENT.md, étape 2."
+              exit 1
+              ;;
+          esac
+
+          case "$SUPABASE_PROJECT_REF" in
+            *.supabase.co | http*)
+              echo "::error::SUPABASE_PROJECT_REF doit contenir uniquement la Reference ID du projet, pas son adresse complète. Dans https://xxxxx.supabase.co, c'est la partie xxxxx."
+              exit 1
+              ;;
+          esac
 
       - name: Relier le projet Supabase
         run: npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
