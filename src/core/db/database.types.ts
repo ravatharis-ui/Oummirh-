@@ -407,15 +407,21 @@ export type Database = {
       claim_domain_events: {
         Args: { p_limit?: number; p_max_attempts?: number }
         Returns: {
-          actor_id: string
+          actor_id: string | null
           attempts: number
           created_at: string
           id: string
-          last_error: string
+          last_error: string | null
           payload: Json
-          processed_at: string
+          processed_at: string | null
           type: string
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "domain_events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       current_employee_id: { Args: never; Returns: string }
       emit_event: {
@@ -454,7 +460,10 @@ export type Database = {
         }[]
       }
       mark_all_notifications_read: { Args: never; Returns: number }
-      mark_event_failed: { Args: { p_error: string; p_id: string }; Returns: undefined }
+      mark_event_failed: {
+        Args: { p_error: string; p_id: string }
+        Returns: undefined
+      }
       mark_event_processed: { Args: { p_id: string }; Returns: undefined }
       mark_notification_emailed: { Args: { p_id: string }; Returns: undefined }
       notify_user: {
