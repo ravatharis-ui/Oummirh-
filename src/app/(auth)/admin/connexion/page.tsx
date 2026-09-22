@@ -4,24 +4,27 @@ import Link from "next/link";
 import { Button } from "@/core/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/core/ui/card";
 
-export const metadata: Metadata = { title: "Connexion direction" };
+import { AdminLoginForm } from "./login-form";
 
-/** Placeholder: the admin email/password login is built in Phase 2. */
+export const metadata: Metadata = { title: "Connexion direction" };
+export const dynamic = "force-dynamic";
+
 export default function AdminLoginPage() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Espace direction</CardTitle>
-        <CardDescription>La connexion par email et mot de passe arrive en Phase 2.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <Button asChild className="w-full">
-          <Link href="/admin">Voir l&apos;aperçu de l&apos;espace</Link>
-        </Button>
-        <Button asChild variant="outline" className="w-full">
-          <Link href="/">Retour à l&apos;accueil</Link>
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Espace direction</CardTitle>
+          <CardDescription>Connectez-vous avec votre adresse email.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AdminLoginForm />
+        </CardContent>
+      </Card>
+
+      <Button asChild variant="ghost" className="mx-auto">
+        <Link href="/connexion">Je suis collaboratrice</Link>
+      </Button>
+    </div>
   );
 }

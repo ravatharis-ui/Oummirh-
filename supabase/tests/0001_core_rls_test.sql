@@ -26,17 +26,20 @@ insert into public.notifications (recipient_user_id, type, title, body) values
 
 insert into public.audit_log (actor_id, action, entity)
   values ('33333333-3333-3333-3333-333333333333', 'test', 'boutiques');
-insert into public.login_attempts (employee_id, success)
-  values ('11111111-1111-1111-1111-111111111111', false);
+-- employee_id reste nul : une tentative contre un identifiant inconnu. Les
+-- tentatives rattachées à une collaboratrice sont testées dans 0002.
+insert into public.login_attempts (employee_id, success) values (null, false);
 insert into public.domain_events (type) values ('demo.hello');
 
 -- ------------------------------------------------------- structural checks --
+-- Formulé comme un invariant plutôt qu'un décompte : chaque phase ajoute des
+-- tables, et aucune ne doit jamais arriver sans politique de sécurité.
 select is(
   (select count(*) from pg_class c
      join pg_namespace n on n.oid = c.relnamespace
-    where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity),
-  9::bigint,
-  'RLS est activée sur les 9 tables du socle'
+    where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity),
+  0::bigint,
+  'Aucune table du schéma public n''est dépourvue de RLS'
 );
 
 select is(

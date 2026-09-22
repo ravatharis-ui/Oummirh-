@@ -43,8 +43,9 @@ Ils se ressemblent et servent à des choses totalement différentes.
 | **Clé `anon`** (ou « publishable »)    | le **projet** : `Project Settings` → `API`                                                          | le navigateur parle à la base, protections appliquées | `eyJ` ou `sb_publishable_` |
 | **Clé `service_role`** (ou « secret ») | le **projet** : `Project Settings` → `API`                                                          | le serveur, sans aucune protection                    | `eyJ` ou `sb_secret_`      |
 
-Les deux clés du projet vont dans **Vercel** (étape 4), jamais dans GitHub.
-Le jeton personnel va dans **GitHub**, jamais dans Vercel.
+Le jeton personnel va dans **GitHub** uniquement, jamais dans Vercel.
+Les deux clés du projet vont dans **Vercel** (étape 4) et, à partir de l'étape 6, également dans
+GitHub : c'est GitHub qui créera vos comptes pour vous.
 
 ### Créer les secrets
 
@@ -133,6 +134,42 @@ une extension à installer une seule fois.
    ```
 
 3. Relancez le bouton de l'étape 3 en laissant « Lancer les tests de sécurité » coché.
+
+---
+
+## Étape 6 — Créer la direction et les collaboratrices
+
+1. Ajoutez cinq secrets de plus dans GitHub, au même endroit qu'à l'étape 2 :
+
+| Nom du secret                   | Valeur                                                        |
+| ------------------------------- | ------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | l'URL du projet                                               |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | la clé `anon` / publishable                                   |
+| `SUPABASE_SERVICE_ROLE_KEY`     | la clé `service_role` / secret                                |
+| `ADMIN_EMAIL`                   | **votre** adresse email, pour vous connecter à la direction   |
+| `ADMIN_PASSWORD`                | un mot de passe d'au moins 12 caractères, que vous choisissez |
+
+2. `Actions` → `Base de données` → `Run workflow`, en cochant
+   **« Créer le compte de direction et les 10 collaboratrices »**.
+
+Vous pouvez relancer ce bouton sans risque : une collaboratrice déjà créée est laissée
+telle quelle, et aucun code en service n'est modifié.
+
+### Obtenir les codes PIN
+
+Les codes tirés à la création sont aléatoires et **connus de personne**, pas même du
+programme qui les a créés : seule leur empreinte chiffrée est enregistrée. C'est voulu, et
+c'est ce qui les rend sûrs.
+
+Pour donner son code à chacune :
+
+1. Connectez-vous à l'espace direction, à l'adresse `/admin/connexion`, avec l'email et le
+   mot de passe de l'étape 6.
+2. Ouvrez `Collaboratrices`, puis la fiche de la personne.
+3. Cliquez sur **« Réinitialiser le code PIN »**. Le code apparaît une seule fois.
+4. Transmettez-le de vive voix, puis passez à la suivante.
+
+Si un code est perdu plus tard, c'est exactement la même manipulation.
 
 ---
 

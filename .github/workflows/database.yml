@@ -16,6 +16,10 @@ on:
         description: "Lancer les tests de sécurité (RLS) après la mise à jour"
         type: boolean
         default: true
+      seed_employees:
+        description: "Créer le compte de direction et les 10 collaboratrices (sans effet si déjà fait)"
+        type: boolean
+        default: false
   push:
     paths:
       - "supabase/migrations/**"
@@ -35,6 +39,11 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -97,6 +106,23 @@ jobs:
 
       - name: Vérifier que le code compile avec les types réels
         run: npm run typecheck
+
+      # Idempotent : une collaboratrice déjà présente est laissée telle quelle, et
+      # aucun code PIN en service n'est modifié.
+      - name: Créer la direction et les collaboratrices
+        if: inputs.seed_employees
+        run: |
+          missing=""
+          [ -n "$NEXT_PUBLIC_SUPABASE_URL" ] || missing="$missing NEXT_PUBLIC_SUPABASE_URL"
+          [ -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ] || missing="$missing NEXT_PUBLIC_SUPABASE_ANON_KEY"
+          [ -n "$SUPABASE_SERVICE_ROLE_KEY" ] || missing="$missing SUPABASE_SERVICE_ROLE_KEY"
+          [ -n "$ADMIN_EMAIL" ] || missing="$missing ADMIN_EMAIL"
+          [ -n "$ADMIN_PASSWORD" ] || missing="$missing ADMIN_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Secrets manquants pour la création :$missing — voir docs/DEPLOIEMENT.md, étape 6."
+            exit 1
+          fi
+          npm run seed:employees
 
       # Nécessite l'extension pgTAP, installée une fois depuis l'éditeur SQL :
       #   create extension if not exists pgtap with schema extensions;

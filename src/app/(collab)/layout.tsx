@@ -1,6 +1,7 @@
-import { Home } from "lucide-react";
+import { Home, UserRound } from "lucide-react";
 import type React from "react";
 
+import { requireEmployee } from "@/core/auth";
 import type { NavItem } from "@/core/modules";
 import { CollabShell } from "@/core/ui/collab-shell";
 
@@ -15,17 +16,21 @@ const CORE_NAV: NavItem[] = [
   { label: "Accueil", href: "/accueil", icon: Home, roles: ["employee"] },
 ];
 
-export default async function CollabLayout({ children }: { children: React.ReactNode }) {
-  const registry = await getRegistry();
-  // Phase 2 replaces this with requireEmployee(), which also resolves the real role.
-  const items = await toShellNavItems([...CORE_NAV, ...registry.nav("collab", "employee")]);
+/** Always last in the tab bar, whatever modules contribute in between. */
+const PROFILE_NAV: NavItem[] = [
+  { label: "Profil", href: "/profil", icon: UserRound, roles: ["employee"] },
+];
 
-  return (
-    <CollabShell
-      items={items}
-      notice="Phase 1 — aperçu de l'espace collaboratrice. La connexion arrive en Phase 2."
-    >
-      {children}
-    </CollabShell>
-  );
+export default async function CollabLayout({ children }: { children: React.ReactNode }) {
+  // Redirects to /connexion when there is no session, before anything renders.
+  await requireEmployee();
+
+  const registry = await getRegistry();
+  const items = await toShellNavItems([
+    ...CORE_NAV,
+    ...registry.nav("collab", "employee"),
+    ...PROFILE_NAV,
+  ]);
+
+  return <CollabShell items={items}>{children}</CollabShell>;
 }

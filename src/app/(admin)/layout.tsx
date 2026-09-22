@@ -1,6 +1,7 @@
 import { LayoutDashboard } from "lucide-react";
 import type React from "react";
 
+import { requireAdmin } from "@/core/auth";
 import type { NavItem } from "@/core/modules";
 import { AdminShell } from "@/core/ui/admin-shell";
 
@@ -14,16 +15,11 @@ const CORE_NAV: NavItem[] = [
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Redirects to /admin/connexion unless the session carries the admin role.
+  await requireAdmin();
+
   const registry = await getRegistry();
-  // Phase 2 replaces this with requireAdmin().
   const items = await toShellNavItems([...CORE_NAV, ...registry.nav("admin", "admin")]);
 
-  return (
-    <AdminShell
-      items={items}
-      notice="Phase 1 — aperçu de l'espace direction. La connexion arrive en Phase 2."
-    >
-      {children}
-    </AdminShell>
-  );
+  return <AdminShell items={items}>{children}</AdminShell>;
 }

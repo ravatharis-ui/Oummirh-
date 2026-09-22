@@ -183,3 +183,29 @@ l'onglet Actions de GitHub, ou l'interface Vercel.
     workflow régénère aussi `database.types.ts` depuis la base réelle et le committe, puis relance
     `typecheck` : une dérive entre le code et la base casse le workflow au lieu de passer inaperçue.
   - Les secrets ne sont jamais interpolés dans un `run:` de workflow ; ils transitent par `env`.
+- **Phase 2** :
+  - **`pin_hash` n'est accordé à aucun rôle**, direction comprise. Seules les fonctions
+    `security definer` le lisent. Conséquence pratique : **jamais de `select *` sur `employees`**,
+    Postgres refuse la requête entière. Un test pgTAP verrouille ce comportement.
+  - **Deux emails distincts** : `employees.email` est l'adresse réelle, facultative, pour les
+    notifications ; le compte de connexion porte une adresse technique en `@staff.oummi.invalid`
+    (domaine réservé RFC 2606, qui ne peut jamais recevoir de courrier).
+  - **Verrouillage** : 5 échecs en 15 minutes, compteur remis à zéro par une connexion réussie.
+    Les tentatives faites pendant le verrouillage ne sont pas journalisées, pour que marteler la
+    porte ne prolonge pas le blocage.
+  - **Session PIN** : `auth.admin.generateLink({ type: 'magiclink' })` puis `verifyOtp` côté
+    serveur. Le lien n'est jamais envoyé ; seul son jeton haché sert à ouvrir la session.
+  - Les écrans d'avant-connexion passent par des RPC `security definer` qui ne renvoient que des
+    prénoms. `anon` n'a toujours aucun droit sur la moindre table.
+  - **Les gardes ne plantent jamais** : sans configuration Supabase, `getCurrentUser()` renvoie
+    `null` et la garde redirige vers la connexion, au lieu d'une erreur 500. Les réglages font
+    déjà de même. Prouvé par des tests Playwright qui tournent sans base.
+  - Formulaires : `employeeFormSchema` normalise les champs bruts du DOM puis les passe
+    (`.pipe()`) à `employeeInputSchema`, qui porte les règles. Une seule source de messages pour
+    le navigateur et pour la server action, qui revalide toujours.
+  - `useWatch` et non `watch` dans les formulaires : seul le premier est compréhensible par le
+    compilateur React.
+  - **Les codes PIN créés par le script de seed sont jetés.** La direction tire chaque code depuis
+    `/admin/collaboratrices`, où il s'affiche une fois. Un fichier de codes est une charge, pas un
+    service. `WRITE_PINS_CSV=1` reste possible en local.
+  - Avant toute livraison SQL : `./scripts/offline-db-check/run.sh`.

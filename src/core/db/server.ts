@@ -38,3 +38,22 @@ export async function createServerSupabaseClient() {
     },
   );
 }
+
+/**
+ * Same client, but `null` instead of a crash when the project is not configured.
+ *
+ * Reserved for the few places that must still render something useful without a
+ * backend: the guards, which then treat the visitor as signed out, and the login
+ * screen, which then explains what is missing. Everywhere else uses the strict
+ * factory above, because a silent null would hide a real misconfiguration.
+ */
+export async function tryCreateServerSupabaseClient() {
+  try {
+    return await createServerSupabaseClient();
+  } catch (cause) {
+    console.error(
+      `[db] Client Supabase indisponible : ${cause instanceof Error ? cause.message : cause}`,
+    );
+    return null;
+  }
+}

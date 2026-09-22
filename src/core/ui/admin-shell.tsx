@@ -7,6 +7,7 @@ import type { ShellNavItem } from "./shell-types";
 interface AdminShellProps {
   items: ShellNavItem[];
   children: ReactNode;
+  /** Optional banner, e.g. a maintenance notice. */
   notice?: string;
 }
 

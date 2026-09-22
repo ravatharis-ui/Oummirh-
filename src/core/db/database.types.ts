@@ -1,3 +1,5 @@
+// Complété à la main pour la migration employees_auth, en attendant que le
+// workflow « Base de données » régénère ce fichier depuis la base réelle.
 export type Json =
   | string
   | number
@@ -146,6 +148,96 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          auth_user_id: string | null
+          avatar_path: string | null
+          boutique_id: string
+          contract_type_id: string
+          created_at: string
+          default_break_end: string | null
+          default_break_start: string | null
+          default_end: string
+          default_start: string
+          display_name: string
+          email: string | null
+          end_date: string | null
+          first_name: string
+          hire_date: string | null
+          id: string
+          is_active: boolean
+          last_name: string
+          phone: string | null
+          pin_hash: string
+          updated_at: string
+          weekly_contract_hours: number | null
+          work_days: number[]
+        }
+        Insert: {
+          auth_user_id?: string | null
+          avatar_path?: string | null
+          boutique_id: string
+          contract_type_id: string
+          created_at?: string
+          default_break_end?: string | null
+          default_break_start?: string | null
+          default_end?: string
+          default_start?: string
+          display_name: string
+          email?: string | null
+          end_date?: string | null
+          first_name: string
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean
+          last_name: string
+          phone?: string | null
+          pin_hash: string
+          updated_at?: string
+          weekly_contract_hours?: number | null
+          work_days?: number[]
+        }
+        Update: {
+          auth_user_id?: string | null
+          avatar_path?: string | null
+          boutique_id?: string
+          contract_type_id?: string
+          created_at?: string
+          default_break_end?: string | null
+          default_break_start?: string | null
+          default_end?: string
+          default_start?: string
+          display_name?: string
+          email?: string | null
+          end_date?: string | null
+          first_name?: string
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean
+          last_name?: string
+          phone?: string | null
+          pin_hash?: string
+          updated_at?: string
+          weekly_contract_hours?: number | null
+          work_days?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_boutique_id_fkey"
+            columns: ["boutique_id"]
+            isOneToOne: false
+            referencedRelation: "boutiques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_contract_type_id_fkey"
+            columns: ["contract_type_id"]
+            isOneToOne: false
+            referencedRelation: "contract_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_attempts: {
         Row: {
           created_at: string
@@ -285,11 +377,65 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_create_employee: {
+        Args: {
+          p_auth_user_id: string
+          p_boutique_id: string
+          p_contract_type_id: string
+          p_default_break_end?: string
+          p_default_break_start?: string
+          p_default_end?: string
+          p_default_start?: string
+          p_display_name: string
+          p_email?: string
+          p_first_name: string
+          p_hire_date?: string
+          p_last_name: string
+          p_phone?: string
+          p_pin: string
+          p_weekly_contract_hours?: number
+          p_work_days?: number[]
+        }
+        Returns: string
+      }
+      current_employee_id: { Args: never; Returns: string }
       has_role: {
         Args: { p_boutique_id?: string; p_role: string }
         Returns: boolean
       }
+      is_acceptable_pin: { Args: { p_pin: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      login_boutiques: {
+        Args: never
+        Returns: { code: string; id: string; name: string }[]
+      }
+      login_employee: {
+        Args: { p_employee_id: string }
+        Returns: {
+          avatar_path: string
+          boutique_id: string
+          display_name: string
+          id: string
+        }[]
+      }
+      login_employees: {
+        Args: { p_boutique_id: string }
+        Returns: { avatar_path: string; display_name: string; id: string }[]
+      }
+      reset_employee_pin: {
+        Args: { p_employee_id: string; p_new_pin: string }
+        Returns: undefined
+      }
+      verify_employee_pin: {
+        Args: { p_employee_id: string; p_ip?: unknown; p_pin: string }
+        Returns: {
+          attempts_left: number
+          auth_email: string
+          auth_user_id: string
+          locked_until: string
+          status: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

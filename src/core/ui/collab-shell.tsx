@@ -7,7 +7,7 @@ import type { ShellNavItem } from "./shell-types";
 interface CollabShellProps {
   items: ShellNavItem[];
   children: ReactNode;
-  /** Temporary notice while a space is still a scaffold. */
+  /** Optional banner, e.g. a maintenance notice. */
   notice?: string;
 }
 

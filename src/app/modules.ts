@@ -1,5 +1,6 @@
 import type { AppModule } from "@/core/modules";
 import { demoModule } from "@/modules/demo";
+import { employeesModule } from "@/modules/employees";
 
 /**
  * Active module manifests.
@@ -9,4 +10,4 @@ import { demoModule } from "@/modules/demo";
  * it to the list below. Menus, dashboard widgets, notification types and event
  * routing are all derived from it by `buildRegistry`.
  */
-export const ALL_MODULES: readonly AppModule[] = [demoModule];
+export const ALL_MODULES: readonly AppModule[] = [employeesModule, demoModule];
