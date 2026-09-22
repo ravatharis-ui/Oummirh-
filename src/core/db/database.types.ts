@@ -1,5 +1,3 @@
-// Complété à la main pour la migration employees_auth, en attendant que le
-// workflow « Base de données » régénère ce fichier depuis la base réelle.
 export type Json =
   | string
   | number
@@ -260,7 +258,15 @@ export type Database = {
           ip?: unknown
           success?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "login_attempts_employee_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -407,7 +413,11 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       login_boutiques: {
         Args: never
-        Returns: { code: string; id: string; name: string }[]
+        Returns: {
+          code: string
+          id: string
+          name: string
+        }[]
       }
       login_employee: {
         Args: { p_employee_id: string }
@@ -420,7 +430,11 @@ export type Database = {
       }
       login_employees: {
         Args: { p_boutique_id: string }
-        Returns: { avatar_path: string; display_name: string; id: string }[]
+        Returns: {
+          avatar_path: string
+          display_name: string
+          id: string
+        }[]
       }
       reset_employee_pin: {
         Args: { p_employee_id: string; p_new_pin: string }
