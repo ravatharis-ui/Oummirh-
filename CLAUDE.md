@@ -333,6 +333,9 @@ insufficient_privilege`.** Sur un projet hébergé, `storage.objects` n'appartie
       fichier laisserait un octet que plus rien ne référence, donc que plus rien ne pourrait
       supprimer. `mark_selfies_purged` ne fait plus qu'oublier le chemin ; le fichier part par
       l'API Storage, depuis la route cron. Le banc d'essai émule maintenant ce trigger.
+  - **Une émulation qui lève un autre code d'erreur est pire que pas d'émulation.**
+    Le simulateur de `storage.protect_delete` levait `P0001` là où Supabase lève `42501` :
+    le test passait hors ligne et échouait sur le projet. Les deux disent désormais `42501`.
   - **Un test qui échoue doit nommer le coupable.** « Attendu 0, obtenu 14 » a coûté un
     aller-retour avec le propriétaire. Les assertions de cloisonnement utilisent désormais
     `set_eq` contre un ensemble vide, qui liste les tables ou les fonctions fautives.

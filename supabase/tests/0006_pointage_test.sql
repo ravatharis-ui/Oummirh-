@@ -410,7 +410,7 @@ select is(
 -- Storage, et ce test est là pour qu'on ne réessaie jamais en SQL.
 select throws_ok(
   $$delete from storage.objects where bucket_id = 'selfies'$$,
-  'P0001', null,
+  '42501', null,
   'La base refuse qu''on supprime un fichier du stockage en SQL'
 );
 

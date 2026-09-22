@@ -86,8 +86,12 @@ grant execute on all functions in schema storage to anon, authenticated, service
 create or replace function storage.protect_delete()
 returns trigger language plpgsql as $$
 begin
+  -- Same SQLSTATE as the hosted project: 42501, insufficient_privilege. An
+  -- emulation that raises a different code makes a test pass here and fail there,
+  -- which is worse than no emulation at all.
   raise exception 'Direct deletion from storage tables is not allowed. Use the Storage API instead.'
-    using hint = 'This prevents accidental data loss from orphaned objects.';
+    using errcode = '42501',
+          hint = 'This prevents accidental data loss from orphaned objects.';
 end;
 $$;
 
