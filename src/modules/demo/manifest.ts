@@ -2,6 +2,8 @@ import { Sparkles } from "lucide-react";
 
 import type { AppModule } from "@/core/modules";
 
+import { demoEventHandlers } from "./server/handlers";
+
 import { DemoAdminWidget } from "./ui/admin/demo-widget";
 import { DemoCollabWidget } from "./ui/collab/demo-widget";
 
@@ -27,10 +29,15 @@ export const demoModule: AppModule = {
     {
       type: "demo.hello",
       title: () => "Notification de démonstration",
-      body: () => "Envoyée par le module de démonstration.",
+      body: () =>
+        "Si vous lisez ceci, la chaîne complète fonctionne : événement, distribution, notification.",
       href: () => "/demo",
+      // Exercises the email path too, so a misconfigured Resend shows up here
+      // rather than the first time a payslip notification matters.
+      email: true,
     },
   ],
+  eventHandlers: demoEventHandlers,
   dashboardWidgets: {
     collab: [DemoCollabWidget],
     admin: [DemoAdminWidget],

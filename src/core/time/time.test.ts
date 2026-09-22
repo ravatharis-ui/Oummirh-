@@ -7,6 +7,7 @@ import {
   formatFrDate,
   formatFrDateShort,
   formatFrDateWithYear,
+  formatRelativeFr,
   formatFrMonth,
   formatSignedDuration,
   formatTime,
@@ -112,6 +113,31 @@ describe("dates", () => {
     expect(formatFrDateWithYear("2026-09-21")).toBe("lundi 21 septembre 2026");
     expect(formatFrDateShort("2026-09-21")).toBe("21/09/2026");
     expect(formatFrMonth("2026-09-21")).toBe("septembre 2026");
+  });
+});
+
+describe("formatRelativeFr", () => {
+  const now = new Date("2026-09-22T12:00:00Z");
+
+  it("écrit « à l'instant » pour les moins d'une minute", () => {
+    expect(formatRelativeFr("2026-09-22T11:59:30Z", now)).toBe("à l'instant");
+    expect(formatRelativeFr("2026-09-22T12:00:00Z", now)).toBe("à l'instant");
+  });
+
+  it("traite une horloge en avance comme l'instant présent", () => {
+    // Le téléphone d'une collaboratrice peut être légèrement en avance ;
+    // « dans 3 minutes » sur une notification reçue serait déroutant.
+    expect(formatRelativeFr("2026-09-22T12:03:00Z", now)).toBe("à l'instant");
+  });
+
+  it("écrit les durées plus longues en français", () => {
+    expect(formatRelativeFr("2026-09-22T11:55:00Z", now)).toBe("il y a 5 minutes");
+    expect(formatRelativeFr("2026-09-22T09:00:00Z", now)).toBe("il y a 3 heures");
+    expect(formatRelativeFr("2026-09-20T12:00:00Z", now)).toBe("il y a 2 jours");
+  });
+
+  it("refuse un instant illisible", () => {
+    expect(() => formatRelativeFr("pas une date", now)).toThrow(/Instant invalide/);
   });
 });
 

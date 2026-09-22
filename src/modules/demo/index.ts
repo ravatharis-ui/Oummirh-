@@ -5,3 +5,10 @@
  * ESLint (`boundaries/dependencies`) enforces that rule.
  */
 export { demoModule } from "./manifest";
+export { DiagnosticsPanel } from "./ui/admin/diagnostics-panel";
+export {
+  listDemoEvents,
+  sendDemoNotification,
+  triggerDemoFailure,
+  type DemoEventRow,
+} from "./server/actions";

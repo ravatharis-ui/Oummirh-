@@ -1,4 +1,4 @@
-import { addDays as addDaysToDate } from "date-fns";
+import { addDays as addDaysToDate, formatDistanceStrict } from "date-fns";
 import { fr } from "date-fns/locale";
 import { formatInTimeZone } from "date-fns-tz";
 
@@ -119,4 +119,30 @@ export function formatFrDateShort(date: DateString): string {
 /** "septembre 2026" */
 export function formatFrMonth(date: DateString): string {
   return formatInTimeZone(parseDateString(date), "UTC", "MMMM yyyy", { locale: fr });
+}
+
+/**
+ * "il y a 5 minutes", "il y a 2 jours".
+ *
+ * Takes the instant as an ISO string, the shape Postgres returns, and `now` as a
+ * parameter so tests never depend on the wall clock.
+ */
+export function formatRelativeFr(instant: string, now: Date = new Date()): string {
+  const date = new Date(instant);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Instant invalide : "${instant}".`);
+  }
+
+  const seconds = Math.round((now.getTime() - date.getTime()) / 1000);
+  if (seconds < 0) return "à l'instant";
+  if (seconds < 60) return "à l'instant";
+
+  // `formatDistanceStrict` and not `formatDistanceToNowStrict`: the latter reads
+  // the real clock and would quietly ignore the `now` passed in, which is exactly
+  // what a test would then fail to pin down.
+  return formatDistanceStrict(date, now, {
+    locale: fr,
+    addSuffix: true,
+    roundingMethod: "floor",
+  });
 }

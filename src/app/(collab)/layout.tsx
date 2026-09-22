@@ -4,6 +4,7 @@ import type React from "react";
 import { requireEmployee } from "@/core/auth";
 import type { NavItem } from "@/core/modules";
 import { CollabShell } from "@/core/ui/collab-shell";
+import { NotificationBell } from "@/core/ui/notification-bell";
 
 import { toShellNavItems } from "../nav-items";
 import { getRegistry } from "../registry";
@@ -23,7 +24,7 @@ const PROFILE_NAV: NavItem[] = [
 
 export default async function CollabLayout({ children }: { children: React.ReactNode }) {
   // Redirects to /connexion when there is no session, before anything renders.
-  await requireEmployee();
+  const { user } = await requireEmployee();
 
   const registry = await getRegistry();
   const items = await toShellNavItems([
@@ -32,5 +33,9 @@ export default async function CollabLayout({ children }: { children: React.React
     ...PROFILE_NAV,
   ]);
 
-  return <CollabShell items={items}>{children}</CollabShell>;
+  return (
+    <CollabShell items={items} bell={<NotificationBell userId={user.id} />}>
+      {children}
+    </CollabShell>
+  );
 }

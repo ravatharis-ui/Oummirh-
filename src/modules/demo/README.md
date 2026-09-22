@@ -1,20 +1,39 @@
 # Module `demo` — Démonstration
 
-_Implémenté en Phase 1._
+_Implémenté en Phase 1, complété en Phase 3._
 
-- **Rôle** : prouver qu'ajouter une fonctionnalité = ajouter un dossier. Sert aussi de gabarit
-  pour créer un vrai module.
+- **Rôle** : prouver qu'ajouter une fonctionnalité = ajouter un dossier, et donner de quoi
+  vérifier la chaîne des événements de bout en bout. Sert aussi de gabarit.
 - **Tables** : aucune.
-- **Événements émis** : aucun.
-- **Événements écoutés** : aucun.
-- **Écrans** : `/demo` (collaboratrice) et `/admin/demo` (direction), plus une carte sur chaque
-  tableau de bord.
+- **Événements émis** : `demo.hello`, `demo.fail`.
+- **Événements écoutés** : `demo.hello` (notifie l'auteur), `demo.fail` (échoue toujours).
+- **Écrans** : `/demo` (collaboratrice), `/admin/demo` (direction, avec le panneau de vérification).
 
 ## Ce qu'il démontre
 
-Le fichier `manifest.ts` déclare une entrée de menu par espace, une carte de tableau de bord par
-espace et un type de notification. Le seul autre endroit qui le mentionne est `src/app/modules.ts`.
-Aucun layout, aucun menu, aucun autre module n'a été modifié pour l'accueillir.
+Le manifeste déclare une entrée de menu par espace, une carte de tableau de bord par espace,
+un type de notification et deux gestionnaires d'événements. Le seul autre endroit qui mentionne
+ce module est `src/app/modules.ts`.
 
-Pour le désactiver sans toucher au code : passez `demo` à `false` dans le réglage
-`modules_enabled` (table `settings`).
+Le panneau de la page `/admin/demo` permet de :
+
+1. inscrire un événement qui aboutit à une notification, email compris ;
+2. inscrire un événement dont le gestionnaire échoue toujours ;
+3. lancer une passe du distributeur à la demande.
+
+`demo.fail` existe pour une raison précise : c'est la seule façon honnête de vérifier qu'un
+événement en échec est abandonné après cinq tentatives au lieu de tourner en boucle. Relancez
+le traitement plusieurs fois et regardez le compteur monter, puis l'événement passer en
+« abandonné » avec son motif.
+
+## Une limite d'architecture illustrée
+
+Le bouton « Traiter la file maintenant » ne vit **pas** dans ce module, mais dans
+`src/app/(admin)/admin/demo/actions.ts`. Construire le registre suppose de connaître tous les
+modules, et un module ne remonte jamais vers la couche application. L'action est donc passée au
+composant en propriété. ESLint a attrapé la première version, qui violait cette règle.
+
+## Désactivation
+
+Passez `demo` à `false` dans le réglage `modules_enabled` : l'onglet, les cartes et les
+gestionnaires disparaissent des deux espaces, sans toucher au code.

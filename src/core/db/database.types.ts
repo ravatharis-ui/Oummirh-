@@ -404,7 +404,24 @@ export type Database = {
         }
         Returns: string
       }
+      claim_domain_events: {
+        Args: { p_limit?: number; p_max_attempts?: number }
+        Returns: {
+          actor_id: string
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string
+          payload: Json
+          processed_at: string
+          type: string
+        }[]
+      }
       current_employee_id: { Args: never; Returns: string }
+      emit_event: {
+        Args: { p_actor_id?: string; p_payload?: Json; p_type: string }
+        Returns: string
+      }
       has_role: {
         Args: { p_boutique_id?: string; p_role: string }
         Returns: boolean
@@ -435,6 +452,21 @@ export type Database = {
           display_name: string
           id: string
         }[]
+      }
+      mark_all_notifications_read: { Args: never; Returns: number }
+      mark_event_failed: { Args: { p_error: string; p_id: string }; Returns: undefined }
+      mark_event_processed: { Args: { p_id: string }; Returns: undefined }
+      mark_notification_emailed: { Args: { p_id: string }; Returns: undefined }
+      notify_user: {
+        Args: {
+          p_body: string
+          p_href?: string
+          p_payload?: Json
+          p_recipient_user_id: string
+          p_title: string
+          p_type: string
+        }
+        Returns: string
       }
       reset_employee_pin: {
         Args: { p_employee_id: string; p_new_pin: string }

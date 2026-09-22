@@ -34,7 +34,18 @@ export interface NotificationTypeDef<TPayload = unknown> {
   email?: boolean;
 }
 
-export type EventHandler = (event: DomainEvent) => Promise<void>;
+/**
+ * What a handler is given besides the event itself.
+ *
+ * `notify` is already bound to the active registry, so a handler announces
+ * something without knowing how notifications are rendered or delivered.
+ * Later phases add to this object rather than to the handler signature.
+ */
+export interface EventContext {
+  notify: (recipientUserId: string, type: string, payload?: unknown) => Promise<void>;
+}
+
+export type EventHandler = (event: DomainEvent, context: EventContext) => Promise<void>;
 
 export interface AppModule {
   /** Stable key, also used in `settings.modules_enabled` (e.g. `conges`). */

@@ -230,3 +230,27 @@ l'onglet Actions de GitHub, ou l'interface Vercel.
     m'appartienne »), et les fixtures vivent dans un point de vente créé pour l'occasion. Le banc
     d'essai peuple délibérément la base avant de lancer les tests, pour que cette erreur se voie
     hors ligne.
+- **Phase 3** :
+  - **Le contrat d'un gestionnaire a gagné un contexte** : `(event, context)`. `context.notify`
+    est déjà relié au registre, donc un gestionnaire dit _quoi est arrivé et à qui_, jamais
+    comment c'est formulé. Les phases suivantes enrichissent ce contexte, pas la signature.
+  - **`attempts` est incrémenté à la réservation**, pas à l'échec. Un événement qui fait tomber
+    le distributeur compte quand même sa tentative, sinon il tournerait en boucle indéfiniment.
+  - `claim_domain_events` utilise `for update skip locked` : le webhook et la tâche planifiée
+    peuvent tourner en même temps sans jamais traiter le même événement.
+  - **L'email est un confort, la cloche fait foi.** Une clé Resend absente ou une panne du
+    service produit un avertissement, pas un échec : faire échouer un événement métier pour un
+    email non parti serait un mauvais échange.
+  - Une adresse en `.invalid` n'est jamais notifiée par email (RFC 2606). Le test porte sur le
+    suffixe réservé, pas sur un domaine codé en dur.
+  - `notify_user` et non `notify` : `NOTIFY` est un mot-clé de Postgres.
+  - **Le cache de requêtes est créé dans un état React**, jamais au niveau module : sur le serveur
+    une instance partagée livrerait les données d'un visiteur au suivant.
+  - `formatDistanceStrict` et non `formatDistanceToNowStrict` : la seconde lit l'horloge réelle
+    et ignorerait silencieusement le `now` injecté. Un test l'a attrapée.
+  - **Un module ne remonte jamais vers `app/`.** Le bouton « Traiter la file » a besoin du
+    registre, que seule la couche application sait construire : l'action est donc définie dans
+    `app/` et passée au composant du module en propriété. ESLint a refusé la première version.
+  - Emails rangés dans `src/core/notifications/emails/` plutôt qu'à la racine comme le prévoit
+    PROMPT.md §3.1 : tout reste sous `src/`, donc sous les règles d'architecture et l'alias `@/`,
+    et cohérent avec les emails propres aux modules.

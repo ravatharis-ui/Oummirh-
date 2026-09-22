@@ -1,4 +1,3 @@
-import { Bell } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { NavLink } from "./nav-link";
@@ -9,24 +8,20 @@ interface CollabShellProps {
   children: ReactNode;
   /** Optional banner, e.g. a maintenance notice. */
   notice?: string;
+  /** The notification bell, built by the layout because only it knows the user. */
+  bell?: ReactNode;
 }
 
 /**
  * Employee space: mobile first, one thumb, bottom tab bar.
  * Touch targets are at least 48 px and body text at least 16 px.
  */
-export function CollabShell({ items, children, notice }: CollabShellProps) {
+export function CollabShell({ items, children, notice, bell }: CollabShellProps) {
   return (
     <div className="bg-background flex min-h-dvh flex-col">
       <header className="bg-background/95 sticky top-0 z-10 flex h-14 items-center justify-between border-b px-4 backdrop-blur">
         <span className="text-lg font-semibold">Oummi RH</span>
-        <span
-          className="text-muted-foreground flex size-12 items-center justify-center"
-          title="Les notifications arrivent en Phase 3"
-          aria-hidden
-        >
-          <Bell className="size-5" />
-        </span>
+        {bell}
       </header>
 
       {notice ? (

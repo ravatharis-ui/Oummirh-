@@ -185,6 +185,57 @@ Si un code est perdu plus tard, c'est exactement la même manipulation.
 
 ---
 
+## Étape 7 — Notifications et emails
+
+Cette étape rend vivantes la cloche et les emails. La cloche fonctionne sans rien ajouter ;
+les emails demandent un compte Resend, et la distribution automatique un webhook.
+
+### Les secrets
+
+Générez deux secrets au hasard. Sur un Mac ou sous Linux, dans un terminal :
+`openssl rand -hex 32`. Sinon, n'importe quelle suite longue de lettres et de chiffres convient.
+
+Ajoutez-les dans **Vercel**, `Settings` → `Environment Variables` :
+
+| Nom                      | Type   | Valeur                                             |
+| ------------------------ | ------ | -------------------------------------------------- |
+| `EVENTS_DISPATCH_SECRET` | Secret | le premier secret généré                           |
+| `CRON_SECRET`            | Secret | le second secret généré                            |
+| `RESEND_API_KEY`         | Secret | la clé fournie par Resend, facultative             |
+| `EMAIL_FROM`             | Config | par exemple `Oummi RH <rh@votredomaine.re>`        |
+| `APP_URL`                | Config | l'adresse de votre site, sans barre oblique finale |
+
+Sans `RESEND_API_KEY`, tout continue de fonctionner : les notifications arrivent dans la cloche,
+et seuls les emails sont ignorés, avec un avertissement dans les journaux.
+
+### Le webhook Supabase
+
+C'est lui qui déclenche le traitement à l'instant où un événement est inscrit.
+
+1. Tableau de bord Supabase → `Database` → `Webhooks` → `Create a new hook`.
+2. Nom : `dispatch-events`. Table : `domain_events`. Événement : `Insert` uniquement.
+3. Type : `HTTP Request`, méthode `POST`.
+4. URL : `https://votre-adresse.vercel.app/api/events/dispatch`.
+5. En-tête HTTP : nom `Authorization`, valeur `Bearer ` suivi de votre `EVENTS_DISPATCH_SECRET`.
+6. `Create webhook`.
+
+Une tâche planifiée Vercel repasse par ailleurs toutes les minutes pour rattraper ce qui aurait
+échoué. Elle est déjà décrite dans `vercel.json`, vous n'avez rien à faire. Sur l'offre gratuite
+de Vercel, les tâches planifiées sont limitées à une fois par jour : changez alors la valeur
+`"* * * * *"` en `"0 3 * * *"`, le webhook restant le chemin principal.
+
+### Vérifier
+
+1. Connectez-vous à l'espace direction, ouvrez `Démo`.
+2. Cliquez sur **« Envoyer une notification de test »**, puis sur **« Traiter la file
+   maintenant »**. La cloche en haut doit afficher un point et le message apparaître.
+3. Cliquez sur **« Déclencher un échec volontaire »**, puis traitez la file six fois de suite.
+   Le compteur de tentatives monte, puis l'événement passe en « abandonné » avec son motif.
+4. Pour vérifier le webhook, envoyez une notification de test **sans** traiter la file : elle
+   doit arriver toute seule en quelques secondes.
+
+---
+
 ## Ce qui se passe ensuite
 
 À chaque phase terminée, le déroulé est toujours le même :

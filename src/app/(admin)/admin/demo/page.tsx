@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/core/ui/card";
+import { DiagnosticsPanel } from "@/modules/demo";
+
+import { dispatchNow } from "./actions";
 
 export const metadata: Metadata = { title: "Démo" };
+export const dynamic = "force-dynamic";
 
 export default function AdminDemoPage() {
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Module de démonstration</h1>
       <Card>
         <CardHeader>
@@ -28,6 +32,7 @@ export default function AdminDemoPage() {
           </p>
         </CardContent>
       </Card>
+      <DiagnosticsPanel onDispatch={dispatchNow} />
     </div>
   );
 }

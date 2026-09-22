@@ -51,13 +51,10 @@ describe("buildRegistry", () => {
     expect(registry.notificationTypes.get("conges.approved")?.title({})).toBe("t");
     const handlers = registry.eventHandlers.get("conges.approved") ?? [];
     expect(handlers.map((h) => h.module)).toEqual(["planning"]);
-    await handlers[0]?.handler({
-      id: "1",
-      type: "conges.approved",
-      payload: {},
-      actorId: null,
-      createdAt: "",
-    });
+    await handlers[0]?.handler(
+      { id: "1", type: "conges.approved", payload: {}, actorId: null, createdAt: "" },
+      { notify: async () => undefined },
+    );
     expect(calls).toEqual(["planning"]);
   });
 

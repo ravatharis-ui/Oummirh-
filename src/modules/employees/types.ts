@@ -22,5 +22,5 @@ export interface EmployeeSummary {
   isActive: boolean;
 }
 
-/** Result envelope shared by every server action in this module. */
-export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
+/** Re-exported so a caller of this module needs a single import. */
+export type { ActionResult } from "@/core/actions";
