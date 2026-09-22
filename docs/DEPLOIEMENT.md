@@ -33,17 +33,40 @@ uniquement dans les écrans décrits ci-dessous. Jamais dans un message, un emai
 
 GitHub va créer et mettre à jour les tables à votre place.
 
-1. Créez un jeton Supabase : <https://supabase.com/dashboard/account/tokens> → `Generate new token`.
-   Nommez-le « GitHub Actions ». **Copiez-le tout de suite**, il ne s'affiche qu'une fois.
+### ⚠️ Ne pas confondre les trois identifiants Supabase
+
+Ils se ressemblent et servent à des choses totalement différentes.
+
+| Identifiant                            | Où le trouver                                                                                       | À quoi il sert                                        | Il commence par            |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | -------------------------- |
+| **Jeton d'accès personnel**            | votre **compte**, pas le projet : avatar en haut à droite → `Account Preferences` → `Access Tokens` | piloter le projet depuis GitHub                       | `sbp_`                     |
+| **Clé `anon`** (ou « publishable »)    | le **projet** : `Project Settings` → `API`                                                          | le navigateur parle à la base, protections appliquées | `eyJ` ou `sb_publishable_` |
+| **Clé `service_role`** (ou « secret ») | le **projet** : `Project Settings` → `API`                                                          | le serveur, sans aucune protection                    | `eyJ` ou `sb_secret_`      |
+
+Les deux clés du projet vont dans **Vercel** (étape 4), jamais dans GitHub.
+Le jeton personnel va dans **GitHub**, jamais dans Vercel.
+
+### Créer les secrets
+
+1. Créez le jeton personnel : avatar Supabase en haut à droite → `Account Preferences` →
+   `Access Tokens` → `Generate new token`. Nommez-le « GitHub Actions ».
+   **Copiez-le tout de suite**, il ne s'affiche qu'une seule fois.
 2. Dans votre dépôt GitHub : `Settings` → `Secrets and variables` → `Actions` →
    `New repository secret`.
 3. Créez ces trois secrets, un par un :
 
-| Nom du secret           | Valeur à coller              |
-| ----------------------- | ---------------------------- |
-| `SUPABASE_ACCESS_TOKEN` | le jeton créé au point 1     |
-| `SUPABASE_PROJECT_REF`  | la Reference ID de l'étape 1 |
-| `SUPABASE_DB_PASSWORD`  | le mot de passe de la base   |
+| Nom du secret           | Valeur à coller               | Exemple de forme        |
+| ----------------------- | ----------------------------- | ----------------------- |
+| `SUPABASE_ACCESS_TOKEN` | le jeton personnel du point 1 | `sbp_a1b2c3...`         |
+| `SUPABASE_PROJECT_REF`  | la Reference ID du projet     | `hujjyzheggsnqtjflilw`  |
+| `SUPABASE_DB_PASSWORD`  | le mot de passe de la base    | ce que vous avez choisi |
+
+> La Reference ID est aussi lisible dans l'adresse de votre projet : dans
+> `https://hujjyzheggsnqtjflilw.supabase.co`, c'est la partie avant `.supabase.co`.
+
+Si vous collez une clé `anon` ou `service_role` dans `SUPABASE_ACCESS_TOKEN`, le workflow de
+l'étape 3 échouera avec un message d'authentification refusée. Recréez simplement le secret avec
+le bon jeton.
 
 ---
 
