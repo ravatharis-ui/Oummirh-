@@ -78,3 +78,19 @@ grant all on storage.buckets, storage.objects to service_role;
 grant select, insert, update, delete on storage.objects to authenticated;
 grant select on storage.buckets to authenticated;
 grant execute on all functions in schema storage to anon, authenticated, service_role;
+
+-- Supabase refuses any SQL DELETE on its storage tables: removing the row without
+-- removing the file would leave an orphaned byte that nothing references any more,
+-- so nothing could ever delete it. Reproduced here because a retention purge that
+-- deletes in SQL passes every offline check and then fails on the real project.
+create or replace function storage.protect_delete()
+returns trigger language plpgsql as $$
+begin
+  raise exception 'Direct deletion from storage tables is not allowed. Use the Storage API instead.'
+    using hint = 'This prevents accidental data loss from orphaned objects.';
+end;
+$$;
+
+create trigger protect_delete_objects
+  before delete on storage.objects
+  for each row execute function storage.protect_delete();

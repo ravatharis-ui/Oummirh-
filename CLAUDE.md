@@ -316,3 +316,23 @@ insufficient_privilege`.** Sur un projet hébergé, `storage.objects` n'appartie
   - Le banc d'essai hors ligne émule désormais `storage.buckets`, `storage.objects` et
     `storage.foldername()` : une migration qui touche au stockage doit être vérifiable sans
     Supabase.
+  - **Trois découvertes faites par les tests sur le projet réel, après la Phase 5.** Elles
+    confirment que seule l'exécution sur le vrai projet trouve ce genre de chose :
+    - **La plateforme réaccorde des droits à `anon`, rétroactivement.** Après la création des
+      tables du planning et du pointage, `anon` avait des droits sur **les quatorze tables** du
+      schéma public — les dix d'origine comprises, dont les révocations dataient de la Phase 1.
+      La RLS tenait toujours, mais le principe « deux barrières » était tombé à une. Réponse :
+      `revoke_anon_table_privileges()`, appelée maintenant, plus
+      `alter default privileges ... revoke all on tables from anon` pour que les futures tables
+      naissent fermées. Le pendant de ce qu'avait fait `core_function_grants` pour les fonctions.
+    - **`public.rls_auto_enable`**, fonction de la plateforme que nous n'avons pas écrite, est
+      apparue appelable par `anon`. Révoquée dans un bloc défensif : elle ne nous appartient pas
+      forcément, et un refus de privilège ne doit jamais faire échouer `db push`.
+    - **`storage.protect_delete`** : Supabase refuse tout `delete` SQL sur `storage.objects`
+      (« Use the Storage API instead »), et il a raison — effacer la ligne sans effacer le
+      fichier laisserait un octet que plus rien ne référence, donc que plus rien ne pourrait
+      supprimer. `mark_selfies_purged` ne fait plus qu'oublier le chemin ; le fichier part par
+      l'API Storage, depuis la route cron. Le banc d'essai émule maintenant ce trigger.
+  - **Un test qui échoue doit nommer le coupable.** « Attendu 0, obtenu 14 » a coûté un
+    aller-retour avec le propriétaire. Les assertions de cloisonnement utilisent désormais
+    `set_eq` contre un ensemble vide, qui liste les tables ou les fonctions fautives.

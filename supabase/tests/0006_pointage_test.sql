@@ -6,7 +6,7 @@
 -- correction n'efface pas l'originale, et un jour d'école n'est pas un retard.
 
 begin;
-select plan(44);
+select plan(46);
 
 -- ---------------------------------------------------------------- fixtures --
 insert into public.boutiques (id, code, name, kind, sort_order) values
@@ -402,6 +402,23 @@ select is(
       and event_type = 'break_start'),
   1::bigint,
   'Le pointage lui-même survit à la purge de sa photo'
+);
+
+-- Supabase refuse tout DELETE en SQL sur ses tables de stockage : effacer la
+-- ligne sans effacer le fichier laisserait un octet que plus rien ne référence,
+-- donc que plus rien ne pourrait supprimer. La purge doit passer par l'API
+-- Storage, et ce test est là pour qu'on ne réessaie jamais en SQL.
+select throws_ok(
+  $$delete from storage.objects where bucket_id = 'selfies'$$,
+  'P0001', null,
+  'La base refuse qu''on supprime un fichier du stockage en SQL'
+);
+
+select is(
+  (select count(*) from storage.objects
+    where name = 'dddddddd-0000-4000-8000-000000000202/photo-1.jpg'),
+  1::bigint,
+  'La purge ne touche pas au stockage : c''est le rôle de la tâche planifiée'
 );
 
 -- ==================================================== cloisonnement lecture ==

@@ -42,10 +42,13 @@ select is(
   'Aucune table du schéma public n''est dépourvue de RLS'
 );
 
-select is(
-  (select count(*) from information_schema.table_privileges
-    where grantee = 'anon' and table_schema = 'public'),
-  0::bigint,
+-- `set_eq` et non un compte : quand ce test échoue, il faut savoir **quelle**
+-- table a été rouverte. Un « attendu 0, obtenu 14 » a coûté un aller-retour.
+select set_eq(
+  $$select distinct table_name::text
+      from information_schema.table_privileges
+     where grantee = 'anon' and table_schema = 'public'$$,
+  array[]::text[],
   'Le rôle anon n''a aucun droit sur la moindre table'
 );
 
