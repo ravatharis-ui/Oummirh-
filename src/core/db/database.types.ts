@@ -851,6 +851,7 @@ export type Database = {
         Returns: undefined
       }
       reunion_today: { Args: never; Returns: string }
+      revoke_anon_table_privileges: { Args: never; Returns: undefined }
       selfies_to_purge: {
         Args: { p_limit?: number }
         Returns: {
