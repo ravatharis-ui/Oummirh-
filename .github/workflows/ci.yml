@@ -1,9 +1,15 @@
 name: CI
 
 on:
+  # Toutes les branches : la branche par défaut de ce dépôt n'est pas `main`,
+  # et un filtre sur `main` empêchait la CI de tourner une seule fois.
   push:
-    branches: [main]
   pull_request:
+
+# Une nouvelle poussée annule la vérification de la précédente sur la même branche.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quality:
