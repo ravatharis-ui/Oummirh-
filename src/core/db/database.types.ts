@@ -854,6 +854,15 @@ export type Database = {
       }
     }
     Functions: {
+      accrue_monthly_leave: { Args: { p_at?: string }; Returns: number }
+      admin_adjust_hours: {
+        Args: { p_employee_id: string; p_minutes: number; p_note: string }
+        Returns: string
+      }
+      admin_adjust_leave: {
+        Args: { p_days: number; p_employee_id: string; p_note: string }
+        Returns: string
+      }
       admin_apply_planning_template: {
         Args: {
           p_employee_id: string
@@ -870,77 +879,6 @@ export type Database = {
           p_occurred_at: string
           p_reason: string
         }
-        Returns: string
-      }
-      accrue_monthly_leave: { Args: { p_at?: string }; Returns: number }
-      admin_adjust_hours: {
-        Args: { p_employee_id: string; p_minutes: number; p_note: string }
-        Returns: string
-      }
-      admin_adjust_leave: {
-        Args: { p_days: number; p_employee_id: string; p_note: string }
-        Returns: string
-      }
-      admin_decide_leave: {
-        Args: { p_approve: boolean; p_comment?: string; p_request_id: string }
-        Returns: undefined
-      }
-      admin_decide_recovery: {
-        Args: { p_approve: boolean; p_comment?: string; p_request_id: string }
-        Returns: undefined
-      }
-      admin_leave_overlaps: {
-        Args: { p_employee_id: string; p_from: string; p_to: string }
-        Returns: {
-          display_name: string
-          employee_id: string
-          end_date: string
-          start_date: string
-        }[]
-      }
-      apply_planning_recovery: {
-        Args: {
-          p_date: string
-          p_employee_id: string
-          p_minutes: number
-          p_mode: string
-          p_source_ref: string
-        }
-        Returns: boolean
-      }
-      cancel_leave_request: { Args: { p_request_id: string }; Returns: undefined }
-      close_leave_period: { Args: { p_at?: string }; Returns: number }
-      compute_daily_hours: { Args: { p_date?: string }; Returns: number }
-      count_leave_days: {
-        Args: {
-          p_employee_id: string
-          p_end_half?: string
-          p_from: string
-          p_start_half?: string
-          p_to: string
-        }
-        Returns: number
-      }
-      hours_balance: { Args: { p_employee_id?: string }; Returns: number }
-      leave_balance: {
-        Args: { p_employee_id?: string; p_period_start?: string }
-        Returns: number
-      }
-      leave_period_start: { Args: { p_date?: string }; Returns: string }
-      leave_rules: { Args: never; Returns: Json }
-      request_leave: {
-        Args: {
-          p_end_date: string
-          p_end_half?: string
-          p_justification_path?: string
-          p_reason?: string
-          p_start_date: string
-          p_start_half?: string
-        }
-        Returns: string
-      }
-      request_recovery: {
-        Args: { p_date: string; p_minutes: number; p_mode: string }
         Returns: string
       }
       admin_create_employee: {
@@ -964,6 +902,14 @@ export type Database = {
         }
         Returns: string
       }
+      admin_decide_leave: {
+        Args: { p_approve: boolean; p_comment?: string; p_request_id: string }
+        Returns: undefined
+      }
+      admin_decide_recovery: {
+        Args: { p_approve: boolean; p_comment?: string; p_request_id: string }
+        Returns: undefined
+      }
       admin_delete_planning_entry: {
         Args: { p_date: string; p_employee_id: string }
         Returns: boolean
@@ -975,6 +921,15 @@ export type Database = {
           p_target_monday: string
         }
         Returns: number
+      }
+      admin_leave_overlaps: {
+        Args: { p_employee_id: string; p_from: string; p_to: string }
+        Returns: {
+          display_name: string
+          employee_id: string
+          end_date: string
+          start_date: string
+        }[]
       }
       admin_upsert_planning_entry: {
         Args: {
@@ -1005,6 +960,20 @@ export type Database = {
           p_to: string
         }
         Returns: number
+      }
+      apply_planning_recovery: {
+        Args: {
+          p_date: string
+          p_employee_id: string
+          p_minutes: number
+          p_mode: string
+          p_source_ref: string
+        }
+        Returns: boolean
+      }
+      cancel_leave_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
       }
       claim_domain_events: {
         Args: { p_limit?: number; p_max_attempts?: number }
@@ -1053,6 +1022,18 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      close_leave_period: { Args: { p_at?: string }; Returns: number }
+      compute_daily_hours: { Args: { p_date?: string }; Returns: number }
+      count_leave_days: {
+        Args: {
+          p_employee_id: string
+          p_end_half?: string
+          p_from: string
+          p_start_half?: string
+          p_to: string
+        }
+        Returns: number
+      }
       current_employee_id: { Args: never; Returns: string }
       emit_event: {
         Args: { p_actor_id?: string; p_payload?: Json; p_type: string }
@@ -1062,8 +1043,15 @@ export type Database = {
         Args: { p_boutique_id?: string; p_role: string }
         Returns: boolean
       }
+      hours_balance: { Args: { p_employee_id?: string }; Returns: number }
       is_acceptable_pin: { Args: { p_pin: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      leave_balance: {
+        Args: { p_employee_id?: string; p_period_start?: string }
+        Returns: number
+      }
+      leave_period_start: { Args: { p_date?: string }; Returns: string }
+      leave_rules: { Args: never; Returns: Json }
       login_boutiques: {
         Args: never
         Returns: {
@@ -1123,6 +1111,21 @@ export type Database = {
       }
       planning_protected_sources: { Args: never; Returns: string[] }
       pointage_run_checks: { Args: { p_at?: string }; Returns: Json }
+      request_leave: {
+        Args: {
+          p_end_date: string
+          p_end_half?: string
+          p_justification_path?: string
+          p_reason?: string
+          p_start_date: string
+          p_start_half?: string
+        }
+        Returns: string
+      }
+      request_recovery: {
+        Args: { p_date: string; p_minutes: number; p_mode: string }
+        Returns: string
+      }
       reset_employee_pin: {
         Args: { p_employee_id: string; p_new_pin: string }
         Returns: undefined
