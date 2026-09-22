@@ -598,7 +598,22 @@ export type Database = {
           local_date: string | null
           worked_minutes: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "time_clocks_boutique_id_fkey"
+            columns: ["boutique_id"]
+            isOneToOne: false
+            referencedRelation: "boutiques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clocks_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       effective_time_clocks: {
         Row: {
@@ -614,12 +629,31 @@ export type Database = {
           photo_path: string | null
           planned_time: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "time_clocks_boutique_id_fkey"
+            columns: ["boutique_id"]
+            isOneToOne: false
+            referencedRelation: "boutiques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clocks_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
       admin_apply_planning_template: {
-        Args: { p_employee_id: string; p_overwrite?: boolean; p_week_start: string }
+        Args: {
+          p_employee_id: string
+          p_overwrite?: boolean
+          p_week_start: string
+        }
         Returns: number
       }
       admin_correct_time_clock: {
@@ -629,6 +663,27 @@ export type Database = {
           p_local_date: string
           p_occurred_at: string
           p_reason: string
+        }
+        Returns: string
+      }
+      admin_create_employee: {
+        Args: {
+          p_auth_user_id: string
+          p_boutique_id: string
+          p_contract_type_id: string
+          p_default_break_end?: string
+          p_default_break_start?: string
+          p_default_end?: string
+          p_default_start?: string
+          p_display_name: string
+          p_email?: string
+          p_first_name: string
+          p_hire_date?: string
+          p_last_name: string
+          p_phone?: string
+          p_pin: string
+          p_weekly_contract_hours?: number
+          p_work_days?: number[]
         }
         Returns: string
       }
@@ -674,6 +729,25 @@ export type Database = {
         }
         Returns: number
       }
+      claim_domain_events: {
+        Args: { p_limit?: number; p_max_attempts?: number }
+        Returns: {
+          actor_id: string | null
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          payload: Json
+          processed_at: string | null
+          type: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "domain_events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       clear_planning_from_event: {
         Args: { p_source: string; p_source_ref: string }
         Returns: number
@@ -695,66 +769,11 @@ export type Database = {
           photo_path: string | null
           planned_time: string | null
         }
-      }
-      mark_selfies_purged: { Args: { p_paths: string[] }; Returns: number }
-      my_boutique_presence: {
-        Args: { p_date: string }
-        Returns: {
-          display_name: string
-          employee_id: string
-          end_time: string
-          start_time: string
-        }[]
-      }
-      planning_announce: {
-        Args: { p_dates: string[]; p_employee_id: string }
-        Returns: undefined
-      }
-      planning_protected_sources: { Args: never; Returns: string[] }
-      pointage_run_checks: { Args: { p_at?: string }; Returns: Json }
-      reunion_today: { Args: never; Returns: string }
-      selfies_to_purge: {
-        Args: { p_limit?: number }
-        Returns: { photo_path: string }[]
-      }
-      admin_create_employee: {
-        Args: {
-          p_auth_user_id: string
-          p_boutique_id: string
-          p_contract_type_id: string
-          p_default_break_end?: string
-          p_default_break_start?: string
-          p_default_end?: string
-          p_default_start?: string
-          p_display_name: string
-          p_email?: string
-          p_first_name: string
-          p_hire_date?: string
-          p_last_name: string
-          p_phone?: string
-          p_pin: string
-          p_weekly_contract_hours?: number
-          p_work_days?: number[]
-        }
-        Returns: string
-      }
-      claim_domain_events: {
-        Args: { p_limit?: number; p_max_attempts?: number }
-        Returns: {
-          actor_id: string | null
-          attempts: number
-          created_at: string
-          id: string
-          last_error: string | null
-          payload: Json
-          processed_at: string | null
-          type: string
-        }[]
         SetofOptions: {
           from: "*"
-          to: "domain_events"
-          isOneToOne: false
-          isSetofReturn: true
+          to: "time_clocks"
+          isOneToOne: true
+          isSetofReturn: false
         }
       }
       current_employee_id: { Args: never; Returns: string }
@@ -800,6 +819,16 @@ export type Database = {
       }
       mark_event_processed: { Args: { p_id: string }; Returns: undefined }
       mark_notification_emailed: { Args: { p_id: string }; Returns: undefined }
+      mark_selfies_purged: { Args: { p_paths: string[] }; Returns: number }
+      my_boutique_presence: {
+        Args: { p_date: string }
+        Returns: {
+          display_name: string
+          employee_id: string
+          end_time: string
+          start_time: string
+        }[]
+      }
       notify_user: {
         Args: {
           p_body: string
@@ -811,9 +840,22 @@ export type Database = {
         }
         Returns: string
       }
+      planning_announce: {
+        Args: { p_dates: string[]; p_employee_id: string }
+        Returns: undefined
+      }
+      planning_protected_sources: { Args: never; Returns: string[] }
+      pointage_run_checks: { Args: { p_at?: string }; Returns: Json }
       reset_employee_pin: {
         Args: { p_employee_id: string; p_new_pin: string }
         Returns: undefined
+      }
+      reunion_today: { Args: never; Returns: string }
+      selfies_to_purge: {
+        Args: { p_limit?: number }
+        Returns: {
+          photo_path: string
+        }[]
       }
       verify_employee_pin: {
         Args: { p_employee_id: string; p_ip?: unknown; p_pin: string }
