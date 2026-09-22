@@ -1,3 +1,5 @@
+import type { ComponentType } from "react";
+
 import type { AppModule, EventHandler, NavItem, NotificationTypeDef, Role } from "./types";
 
 /**
@@ -16,7 +18,7 @@ export interface Registry {
   nav: (space: "collab" | "admin", role: Role) => NavItem[];
   notificationTypes: Map<string, NotificationTypeDef>;
   eventHandlers: Map<string, Array<{ module: string; handler: EventHandler }>>;
-  widgets: (space: "collab" | "admin") => NonNullable<AppModule["dashboardWidgets"]>[typeof space];
+  widgets: (space: "collab" | "admin") => ComponentType[];
 }
 
 export interface BuildRegistryOptions {

@@ -14,7 +14,10 @@ export default function AdminLoginPage() {
         <CardTitle>Espace direction</CardTitle>
         <CardDescription>La connexion par email et mot de passe arrive en Phase 2.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-3">
+        <Button asChild className="w-full">
+          <Link href="/admin">Voir l&apos;aperçu de l&apos;espace</Link>
+        </Button>
         <Button asChild variant="outline" className="w-full">
           <Link href="/">Retour à l&apos;accueil</Link>
         </Button>

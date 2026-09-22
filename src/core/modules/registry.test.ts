@@ -1,15 +1,20 @@
 import { Home } from "lucide-react";
+import type { Route } from "next";
 import { describe, expect, it } from "vitest";
 import { buildRegistry } from "./registry";
 import type { AppModule } from "./types";
+
+// Synthetic modules point at routes that do not exist in the app; typed routes would
+// reject them, so the fixtures cast. Real manifests never do.
+const route = (href: string) => href as Route;
 
 const fake = (key: string, overrides: Partial<AppModule> = {}): AppModule => ({
   key,
   name: key,
   enabled: true,
   nav: {
-    collab: [{ label: key, href: `/${key}`, icon: Home, roles: ["employee"] }],
-    admin: [{ label: key, href: `/admin/${key}`, icon: Home, roles: ["admin"] }],
+    collab: [{ label: key, href: route(`/${key}`), icon: Home, roles: ["employee"] }],
+    admin: [{ label: key, href: route(`/admin/${key}`), icon: Home, roles: ["admin"] }],
   },
   ...overrides,
 });
@@ -54,6 +59,25 @@ describe("buildRegistry", () => {
       createdAt: "",
     });
     expect(calls).toEqual(["planning"]);
+  });
+
+  it("collects dashboard widgets per space, in module order", () => {
+    const CollabA = () => null;
+    const AdminA = () => null;
+    const CollabB = () => null;
+
+    const registry = buildRegistry([
+      fake("a", { dashboardWidgets: { collab: [CollabA], admin: [AdminA] } }),
+      fake("b", { dashboardWidgets: { collab: [CollabB] } }),
+      fake("c"),
+    ]);
+
+    expect(registry.widgets("collab")).toEqual([CollabA, CollabB]);
+    expect(registry.widgets("admin")).toEqual([AdminA]);
+  });
+
+  it("returns no widgets when no module contributes any", () => {
+    expect(buildRegistry([fake("a")]).widgets("admin")).toEqual([]);
   });
 
   it("rejects duplicate module keys and duplicate notification types", () => {

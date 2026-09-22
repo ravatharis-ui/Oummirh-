@@ -14,7 +14,10 @@ export default function EmployeeLoginPage() {
         <CardTitle>Espace collaboratrice</CardTitle>
         <CardDescription>La connexion par prénom et code PIN arrive en Phase 2.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-3">
+        <Button asChild className="w-full">
+          <Link href="/accueil">Voir l&apos;aperçu de l&apos;espace</Link>
+        </Button>
         <Button asChild variant="outline" className="w-full">
           <Link href="/">Retour à l&apos;accueil</Link>
         </Button>

@@ -113,17 +113,46 @@ construisent **uniquement** depuis `buildRegistry(ALL_MODULES, { disabledKeys })
 ## Commandes
 
 ```
-npm run dev          # serveur de dev
-npm run check        # lint + prettier + tsc + vitest (à lancer avant chaque commit)
-npm run test:e2e     # Playwright (mobile + desktop) ; PLAYWRIGHT_CHROMIUM_PATH=... pour réutiliser un Chromium existant
-npm run db:start     # Supabase local (Docker requis)
-npm run db:reset     # rejoue migrations + seed.sql
-npm run db:types     # régénère src/core/db/database.types.ts
-npm run test:db      # tests pgTAP
+npm run dev            # serveur de dev
+npm run check          # lint + prettier + tsc + vitest (à lancer avant chaque commit)
+npm run test:e2e       # Playwright (mobile + desktop) ; PLAYWRIGHT_CHROMIUM_PATH=... réutilise un Chromium existant
+npm run db:link        # relie le dépôt au projet Supabase hébergé
+npm run db:push        # applique les migrations au projet relié
+npm run db:types       # régénère src/core/db/database.types.ts depuis le projet relié
+npm run test:db        # tests pgTAP sur le projet relié (extension pgtap requise)
+npm run db:start       # variante locale, Docker requis (db:reset, db:types:local, test:db:local)
 ```
+
+Le projet cible une base **Supabase hébergée**, pas une base locale : les commandes par défaut
+utilisent `--linked`. Les variantes `:local` restent disponibles pour qui a Docker.
 
 ## Journal des décisions d'architecture
 
 - **Phase 0** : Next 16 / React 19 / Tailwind v4 / ESLint 9 flat config. shadcn configuré avec
   alias `@/core/ui`. `src/app/modules.ts` est le seul point d'enregistrement des modules
   (garde `core/` indépendant des modules). CSP différée en Phase 11.
+- **Phase 1** :
+  - `user_roles` : la clé primaire `(user_id, role, boutique_id)` de PROMPT.md est invalide en
+    Postgres (une colonne de PK ne peut pas être nullable). Remplacée par
+    `unique nulls not distinct`, avec un `check` : `manager` est rattaché à une boutique,
+    `employee` et `admin` sont globaux.
+  - **Données de référence dans une migration** (`0002_core_reference_data.sql`), pas dans
+    `seed.sql` : `supabase db push` n'exécute pas `seed.sql`, et `db reset` détruirait les données
+    d'un projet hébergé. Toutes les insertions sont idempotentes (`on conflict do nothing`).
+  - `anon` n'a **aucun droit** sur le schéma public. Les écrans d'avant-connexion (liste des
+    boutiques et des prénoms) passeront par des RPC `security definer` en Phase 2.
+  - `notifications` : la seule écriture cliente autorisée est `read_at`, via un `grant update
+(read_at)`. Le texte d'une notification n'est donc pas réécrivable depuis le navigateur.
+  - `is_admin()` et `has_role()` sont `security definer` avec `search_path = ''` : une politique
+    RLS sur `user_roles` qui interrogerait `user_roles` provoquerait une récursion infinie.
+  - **Dates** : les jours sont des chaînes `AAAA-MM-JJ` (jamais des `Date`), ancrées à 12:00 UTC
+    en interne. Une chaîne ne peut pas glisser d'un jour à cause d'un fuseau.
+  - **Réglages non bloquants** : `getSettings()` retombe sur les valeurs par défaut si la base est
+    injoignable. Les réglages pilotent l'affichage, jamais les droits (qui sont dans la RLS).
+  - **Routes typées** (`typedRoutes`) : `NavItem.href` est de type `Route`, donc une entrée de menu
+    pointant vers une page inexistante casse le typecheck. `npm run typecheck` lance
+    `next typegen` au préalable.
+  - **Passage serveur → client** : les layouts rendent l'icône et attendent le compteur avant de
+    transmettre les entrées de menu aux shells clients (une référence de composant et une fonction
+    ne traversent pas la frontière).
+  - Le middleware de rafraîchissement de session est reporté en Phase 2, avec l'authentification.

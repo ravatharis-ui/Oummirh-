@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -16,7 +17,7 @@ export interface DomainEvent<TPayload = unknown> {
 export interface NavItem {
   /** Label shown in the menu (French). */
   label: string;
-  href: string;
+  href: Route;
   icon: LucideIcon;
   roles: Role[];
   /** Optional counter (e.g. pending requests) rendered as a badge. */
