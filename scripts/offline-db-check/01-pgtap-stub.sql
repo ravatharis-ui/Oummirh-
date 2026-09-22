@@ -37,6 +37,18 @@ begin
   return 'ok - ' || $2;
 end $$;
 
+create or replace function public.cmp_ok(anyelement, text, anyelement, text) returns text
+language plpgsql as $$
+declare result boolean;
+begin
+  perform public.bump();
+  execute format('select $1 %s $2', $2) into result using $1, $3;
+  if result is not true then
+    raise exception 'ECHEC [%] : « % % % » est faux', $4, $1, $2, $3;
+  end if;
+  return 'ok - ' || $4;
+end $$;
+
 create or replace function public.throws_ok(text, text, text, text) returns text
 language plpgsql as $$
 declare got text;
@@ -64,6 +76,20 @@ begin
     raise exception 'ECHEC [%] : erreur inattendue % (%)', $2, SQLSTATE, SQLERRM;
   end;
   return 'ok - ' || $2;
+end $$;
+
+create or replace function public.set_eq(text, anyarray, text) returns text
+language plpgsql as $$
+declare got text[]; want text[];
+begin
+  perform public.bump();
+  execute format('select coalesce(array_agg(x order by x), array[]::text[]) from (%s) s(x)', $1)
+    into got;
+  select coalesce(array_agg(x order by x), array[]::text[]) into want from unnest($2) x;
+  if got is distinct from want then
+    raise exception 'ECHEC [%] : attendu %, obtenu %', $3, want, got;
+  end if;
+  return 'ok - ' || $3;
 end $$;
 
 create or replace function public.finish() returns setof text

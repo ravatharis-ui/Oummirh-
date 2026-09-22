@@ -38,3 +38,9 @@ language sql stable as $$
 $$;
 
 grant execute on all functions in schema auth to anon, authenticated, service_role;
+
+-- Supabase grants execute on every new function in `public` to the API roles.
+-- Reproducing it here is what makes this harness able to catch an over-permissive
+-- function: without it, a `revoke ... from public` looks sufficient when it is not.
+alter default privileges for role postgres in schema public
+  grant all on functions to anon, authenticated, service_role;

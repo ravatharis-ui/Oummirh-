@@ -15,7 +15,11 @@ Il attrape, avant tout envoi :
 - du SQL qui ne compile pas ;
 - une migration qui ne s'applique pas, ou qui n'est pas rejouable sans doublon ;
 - une politique de sécurité qui laisse passer la mauvaise ligne ;
-- un `plan(n)` qui ne correspond plus au nombre d'assertions.
+- un `plan(n)` qui ne correspond plus au nombre d'assertions ;
+- une fonction laissée appelable par un visiteur anonyme, parce que le socle reproduit les
+  autorisations par défaut de Supabase ;
+- un test qui ne passerait que sur une base vide, parce que la base est peuplée de dix
+  collaboratrices avant que la suite ne démarre.
 
 ## Ce que ça ne remplace pas
 

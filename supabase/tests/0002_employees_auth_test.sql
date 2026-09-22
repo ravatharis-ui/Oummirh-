@@ -1,38 +1,41 @@
 -- pgTAP: collaboratrices et authentification par PIN.
 --
--- Prouve que le hachage d'un PIN n'est lisible par personne, que l'écran
--- d'avant-connexion n'expose que des prénoms, que le verrouillage tient après
--- cinq échecs, et que seule la direction peut réinitialiser un code.
+-- Comme 0001, ces tests tournent sur une base qui contient de vraies personnes.
+-- Les fixtures vivent donc dans un point de vente créé pour l'occasion, et
+-- chaque affirmation est bornée à ce point de vente ou à ses comptes.
 
 begin;
-select plan(39);
+select plan(40);
 
 -- ---------------------------------------------------------------- fixtures --
+insert into public.boutiques (id, code, name, kind, sort_order) values
+  ('bbbbbbbb-0000-4000-8000-000000000001', 'TEST_AUTH', 'Boutique de test', 'physical', 9000),
+  ('bbbbbbbb-0000-4000-8000-000000000002', 'TEST_VIDE', 'Boutique de test vide', 'physical', 9001);
+
 insert into auth.users (id, email) values
-  ('11111111-1111-1111-1111-111111111111', 'loubna@staff.oummi.invalid'),
-  ('22222222-2222-2222-2222-222222222222', 'chamyma@staff.oummi.invalid'),
-  ('33333333-3333-3333-3333-333333333333', 'direction@oummi.invalid');
+  ('cccccccc-0000-4000-8000-000000000001', 'loubna-test@staff.oummi.invalid'),
+  ('cccccccc-0000-4000-8000-000000000002', 'chamyma-test@staff.oummi.invalid'),
+  ('cccccccc-0000-4000-8000-000000000003', 'direction-test@oummi.invalid'),
+  ('cccccccc-0000-4000-8000-000000000004', 'zoe-test@staff.oummi.invalid');
 
 insert into public.user_roles (user_id, role, boutique_id) values
-  ('11111111-1111-1111-1111-111111111111', 'employee', null),
-  ('22222222-2222-2222-2222-222222222222', 'employee', null),
-  ('33333333-3333-3333-3333-333333333333', 'admin', null);
+  ('cccccccc-0000-4000-8000-000000000001', 'employee', null),
+  ('cccccccc-0000-4000-8000-000000000002', 'employee', null),
+  ('cccccccc-0000-4000-8000-000000000003', 'admin', null);
 
 insert into public.employees (id, auth_user_id, last_name, first_name, display_name,
   boutique_id, contract_type_id, pin_hash, weekly_contract_hours)
 values
-  ('44444444-4444-4444-4444-444444444444', '11111111-1111-1111-1111-111111111111',
-   'ADAM', 'Loubna', 'Loubna',
-   (select id from public.boutiques where code = 'STDENIS'),
+  ('dddddddd-0000-4000-8000-000000000001', 'cccccccc-0000-4000-8000-000000000001',
+   'TESTNOM', 'TestLoubna', 'TestLoubna', 'bbbbbbbb-0000-4000-8000-000000000001',
    (select id from public.contract_types where code = 'CDI'),
    extensions.crypt('7392', extensions.gen_salt('bf')), 35),
-  ('55555555-5555-5555-5555-555555555555', '22222222-2222-2222-2222-222222222222',
-   'ADAM', 'Chamyma', 'Chamyma',
-   (select id from public.boutiques where code = 'STDENIS'),
+  ('dddddddd-0000-4000-8000-000000000002', 'cccccccc-0000-4000-8000-000000000002',
+   'TESTNOM', 'TestChamyma', 'TestChamyma', 'bbbbbbbb-0000-4000-8000-000000000001',
    (select id from public.contract_types where code = 'CDD'),
    extensions.crypt('8461', extensions.gen_salt('bf')), 35);
 
--- ----------------------------------------------------------- le hachage -----
+-- ------------------------------------------------------------- le hachage ---
 select is(
   (select count(*) from information_schema.column_privileges
     where table_schema = 'public' and table_name = 'employees'
@@ -41,10 +44,10 @@ select is(
   'Aucune session ne peut lire pin_hash, direction comprise'
 );
 
--- Conséquence pratique du refus sur pin_hash : toute requête doit nommer ses
--- colonnes. Un `select *`, que le client Supabase envoie par défaut, échoue.
+-- Conséquence pratique : toute requête doit nommer ses colonnes. Un `select *`,
+-- que le client Supabase envoie par défaut, échoue.
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"cccccccc-0000-4000-8000-000000000003","role":"authenticated"}';
 select throws_ok(
   $$select * from public.employees$$,
   '42501', null,
@@ -56,6 +59,7 @@ select lives_ok(
 );
 reset role;
 
+-- -------------------------------------------------------- règles sur le PIN --
 select ok(public.is_acceptable_pin('7392'), 'Un PIN à quatre chiffres est accepté');
 select ok(not public.is_acceptable_pin('1234'), 'La suite 1234 est refusée');
 select ok(not public.is_acceptable_pin('0000'), 'Le code 0000 est refusé');
@@ -67,26 +71,34 @@ select ok(not public.is_acceptable_pin('73a2'), 'Un code non numérique est refu
 set local role anon;
 
 select is(
-  (select count(*) from public.login_boutiques()),
+  (select count(*) from public.login_boutiques()
+    where id = 'bbbbbbbb-0000-4000-8000-000000000001'),
   1::bigint,
-  'Seuls les points de vente ayant une collaboratrice sont proposés'
+  'Un point de vente ayant une collaboratrice est proposé'
+);
+
+select is(
+  (select count(*) from public.login_boutiques()
+    where id = 'bbbbbbbb-0000-4000-8000-000000000002'),
+  0::bigint,
+  'Un point de vente sans collaboratrice n''est pas proposé'
 );
 
 select is(
   (select string_agg(display_name, ', ' order by display_name)
-     from public.login_employees((select b.id from public.login_boutiques() b limit 1))),
-  'Chamyma, Loubna',
+     from public.login_employees('bbbbbbbb-0000-4000-8000-000000000001')),
+  'TestChamyma, TestLoubna',
   'L''écran de connexion propose les prénoms de la boutique'
 );
 
 select is(
-  (select display_name from public.login_employee('44444444-4444-4444-4444-444444444444')),
-  'Loubna',
+  (select display_name from public.login_employee('dddddddd-0000-4000-8000-000000000001')),
+  'TestLoubna',
   'Une collaboratrice mémorisée est retrouvée par son identifiant'
 );
 
 select is(
-  (select count(*) from public.login_employee('99999999-9999-9999-9999-999999999999')),
+  (select count(*) from public.login_employee('99999999-9999-4999-8999-999999999999')),
   0::bigint,
   'Un identifiant inconnu ne renvoie rien'
 );
@@ -98,22 +110,32 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$select 1 from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '7392', null)$$,
+  $$select 1 from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '7392', null)$$,
   '42501', null,
   'Un visiteur anonyme ne peut pas vérifier un code PIN'
 );
 
 reset role;
 
--- ------------------------------------------------------------ cloisonnement --
+-- Une session valide non plus : seul le serveur peut tenter un code.
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
-
-select is((select count(*) from public.employees), 1::bigint,
-          'Une collaboratrice ne voit que sa propre fiche');
+set local request.jwt.claims = '{"sub":"cccccccc-0000-4000-8000-000000000001","role":"authenticated"}';
 
 select throws_ok(
-  $$select public.reset_employee_pin('55555555-5555-5555-5555-555555555555', '2580')$$,
+  $$select 1 from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '7392', null)$$,
+  '42501', null,
+  'Une collaboratrice connectée ne peut pas vérifier un code PIN elle-même'
+);
+
+select is(
+  (select count(*) from public.employees
+    where id <> 'dddddddd-0000-4000-8000-000000000001'),
+  0::bigint,
+  'Une collaboratrice ne voit aucune fiche qui ne soit la sienne'
+);
+
+select throws_ok(
+  $$select public.reset_employee_pin('dddddddd-0000-4000-8000-000000000002', '2580')$$,
   '42501', null,
   'Une collaboratrice ne peut pas réinitialiser le PIN d''une collègue'
 );
@@ -121,139 +143,127 @@ select throws_ok(
 reset role;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}';
-select is((select count(*) from public.employees), 2::bigint,
-          'La direction voit toutes les fiches');
+set local request.jwt.claims = '{"sub":"cccccccc-0000-4000-8000-000000000003","role":"authenticated"}';
+select is(
+  (select count(*) from public.employees
+    where boutique_id = 'bbbbbbbb-0000-4000-8000-000000000001'),
+  2::bigint,
+  'La direction voit les fiches de la boutique de test'
+);
 reset role;
 
 -- ------------------------------------------------------ vérification du PIN --
 -- Chaque appel est une instruction distincte, donc la tentative précédente est
 -- déjà visible : c'est ce qui fait avancer le compteur d'échecs.
-select is((select status from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '7392', null)),
+select is((select status from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '7392', null)),
           'ok', 'Le bon code ouvre une session');
 
 select is(
-  (select auth_email from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '7392', null)),
-  'loubna@staff.oummi.invalid',
+  (select auth_email from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '7392', null)),
+  'loubna-test@staff.oummi.invalid',
   'La vérification renvoie l''adresse technique du compte, pas l''email de notification'
 );
 
-select is((select status from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '0000', null)),
+select is((select status from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '0000', null)),
           'invalid_pin', 'Un mauvais code est refusé');
-select is((select attempts_left from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '0000', null)),
+select is((select attempts_left from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '0000', null)),
           3, 'Le nombre d''essais restants décroît');
-select is((select status from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '0000', null)),
+select is((select status from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '0000', null)),
           'invalid_pin', 'Troisième échec');
-select is((select status from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '0000', null)),
+select is((select status from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '0000', null)),
           'invalid_pin', 'Quatrième échec');
-select is((select status from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '0000', null)),
+select is((select status from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '0000', null)),
           'invalid_pin', 'Cinquième échec');
 
-select is((select status from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '0000', null)),
+select is((select status from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '0000', null)),
           'locked', 'Le compte se verrouille au sixième essai');
 
-select is((select status from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '7392', null)),
+select is((select status from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '7392', null)),
           'locked', 'Même le bon code est refusé pendant le verrouillage');
 
 select is(
   (select count(*) from public.login_attempts
-    where employee_id = '44444444-4444-4444-4444-444444444444' and not success),
+    where employee_id = 'dddddddd-0000-4000-8000-000000000001' and not success),
   5::bigint,
   'Les essais faits pendant le verrouillage ne le prolongent pas'
 );
 
 -- --------------------------------------------------------- réinitialisation --
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"cccccccc-0000-4000-8000-000000000003","role":"authenticated"}';
 
 select throws_ok(
-  $$select public.reset_employee_pin('44444444-4444-4444-4444-444444444444', '1234')$$,
+  $$select public.reset_employee_pin('dddddddd-0000-4000-8000-000000000001', '1234')$$,
   '22023', null,
   'La direction ne peut pas imposer un code trivial'
 );
 
 select lives_ok(
-  $$select public.reset_employee_pin('44444444-4444-4444-4444-444444444444', '2580')$$,
+  $$select public.reset_employee_pin('dddddddd-0000-4000-8000-000000000001', '2580')$$,
   'La direction réinitialise un code PIN'
 );
 
-reset role;
-
-select is((select status from public.verify_employee_pin('44444444-4444-4444-4444-444444444444', '2580', null)),
-          'ok', 'La réinitialisation lève le verrouillage et le nouveau code fonctionne');
-
-select is(
-  (select count(*) from public.audit_log
-    where action = 'pin.reset' and after::text !~ '2580'),
-  1::bigint,
-  'La réinitialisation est tracée sans jamais écrire le code'
-);
-
--- ---------------------------------------------------------------- création --
-set local role authenticated;
-set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
+-- --------------------------------------------------------------- création ---
 select throws_ok(
-  $$select public.admin_create_employee(null, 'HOARAU', 'Zoé', 'Zoé',
-      (select id from public.boutiques where code = 'ONLINE'),
-      (select id from public.contract_types where code = 'CDI'), '7531')$$,
-  '42501', null,
-  'Une collaboratrice ne peut pas créer une collègue'
-);
-reset role;
-
-set local role authenticated;
-set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}';
-
-select throws_ok(
-  $$select public.admin_create_employee(null, 'HOARAU', 'Zoé', 'Zoé',
-      (select id from public.boutiques where code = 'ONLINE'),
+  $$select public.admin_create_employee(null, 'TESTNOM', 'TestZoe', 'TestZoe',
+      'bbbbbbbb-0000-4000-8000-000000000001',
       (select id from public.contract_types where code = 'CDI'), '1111')$$,
   '22023', null,
   'La création refuse un code trivial'
 );
 
 select lives_ok(
-  $$select public.admin_create_employee(null, 'HOARAU', 'Zoé', 'Zoé',
-      (select id from public.boutiques where code = 'ONLINE'),
-      (select id from public.contract_types where code = 'CDI'), '7531')$$,
+  $$select set_config('test.created', public.admin_create_employee(
+      'cccccccc-0000-4000-8000-000000000004', 'TESTNOM', 'TestZoe', 'TestZoe',
+      'bbbbbbbb-0000-4000-8000-000000000001',
+      (select id from public.contract_types where code = 'CDI'), '7531')::text, false)$$,
   'La direction crée une collaboratrice'
 );
 
 reset role;
 
-select is(
-  (select count(*) from public.audit_log where action = 'employee.created'),
-  1::bigint,
-  'La création est tracée'
-);
-
--- Un compte créé sans rôle ne pourrait jamais se connecter : la fonction le pose.
-insert into auth.users (id, email) values
-  ('66666666-6666-6666-6666-666666666666', 'zoe@staff.oummi.invalid');
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}';
-select lives_ok(
-  $$select public.admin_create_employee('66666666-6666-6666-6666-666666666666',
-      'HOARAU', 'Zoé', 'Zoé',
-      (select id from public.boutiques where code = 'ONLINE'),
+set local request.jwt.claims = '{"sub":"cccccccc-0000-4000-8000-000000000001","role":"authenticated"}';
+select throws_ok(
+  $$select public.admin_create_employee(null, 'TESTNOM', 'TestAutre', 'TestAutre',
+      'bbbbbbbb-0000-4000-8000-000000000001',
       (select id from public.contract_types where code = 'CDI'), '7531')$$,
-  'La création accepte un compte de connexion'
+  '42501', null,
+  'Une collaboratrice ne peut pas créer une collègue'
 );
 reset role;
 
 select is(
   (select count(*) from public.user_roles
-    where user_id = '66666666-6666-6666-6666-666666666666' and role = 'employee'),
+    where user_id = 'cccccccc-0000-4000-8000-000000000004' and role = 'employee'),
   1::bigint,
   'La création pose le rôle employee dans la même transaction'
 );
 
 select is(
   (select count(*) from public.audit_log
-    where action = 'employee.created' and after::text ~ '7531'),
+    where entity_id = current_setting('test.created')::uuid and action = 'employee.created'),
+  1::bigint,
+  'La création est tracée'
+);
+
+select is(
+  (select count(*) from public.audit_log
+    where entity_id = current_setting('test.created')::uuid and after::text ~ '7531'),
   0::bigint,
   'Le code choisi à la création n''apparaît nulle part dans la trace'
 );
+
+select is(
+  (select count(*) from public.audit_log
+    where entity_id = 'dddddddd-0000-4000-8000-000000000001'
+      and action = 'pin.reset' and after::text ~ '2580'),
+  0::bigint,
+  'La réinitialisation est tracée sans jamais écrire le code'
+);
+
+select is((select status from public.verify_employee_pin('dddddddd-0000-4000-8000-000000000001', '2580', null)),
+          'ok', 'La réinitialisation lève le verrouillage et le nouveau code fonctionne');
 
 select * from finish();
 rollback;

@@ -35,6 +35,15 @@ fi
 as_pg "$PGBIN/pg_ctl -D $PGDATA_DIR -l $SOCKET_DIR/offline-check.log -o '-p $PGPORT -k $SOCKET_DIR' -w start" >/dev/null 2>&1 || true
 
 PSQL="psql -h $SOCKET_DIR -p $PGPORT -U postgres -v ON_ERROR_STOP=1 -q"
+
+# A postmaster left over from a deleted cluster answers on the socket but serves
+# nothing. Fail loudly here rather than a hundred confusing lines later.
+if ! $PSQL -c "select 1" >/dev/null 2>&1; then
+  echo "✗ Le serveur ne répond pas sur $SOCKET_DIR:$PGPORT." >&2
+  echo "  Un ancien processus tourne peut-être encore : pkill -9 -u postgres postgres" >&2
+  echo "  puis supprimez $PGDATA_DIR et relancez." >&2
+  exit 1
+fi
 cleanup() { $PSQL -c "drop database if exists $DB_NAME;" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
@@ -73,6 +82,11 @@ if [ "$before" != "$after" ]; then
   exit 1
 fi
 echo "   inchangées :$after"
+
+# Les tests tournent sur une base peuplée, comme le projet réel.
+echo "→ Données d'un projet déjà en service"
+$PSQL -d "$DB_NAME" -f "$HERE/02-existing-data.sql" >/dev/null
+echo "   $($PSQL -d "$DB_NAME" -tAc "select count(*) from public.employees") collaboratrices en place"
 
 echo "→ Simulateur pgTAP"
 $PSQL -d "$DB_NAME" -f "$HERE/01-pgtap-stub.sql" >/dev/null

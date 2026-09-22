@@ -209,3 +209,16 @@ l'onglet Actions de GitHub, ou l'interface Vercel.
     `/admin/collaboratrices`, où il s'affiche une fois. Un fichier de codes est une charge, pas un
     service. `WRITE_PINS_CSV=1` reste possible en local.
   - Avant toute livraison SQL : `./scripts/offline-db-check/run.sh`.
+  - **Toute nouvelle fonction SQL naît appelable par `anon`.** Supabase applique
+    `alter default privileges ... grant all on functions to anon, authenticated`, et un
+    `revoke ... from public` ne défait pas une autorisation accordée nommément à un rôle.
+    `verify_employee_pin` s'est retrouvée joignable sans session. La migration
+    `20260922140000_core_function_grants` ferme la porte et inverse le défaut : une fonction
+    est désormais privée tant qu'une migration ne l'a pas explicitement ouverte. Le test
+    `0003_function_grants_test.sql` fige la liste des fonctions ouvertes à `anon`.
+  - **Un test qui ne passe que sur une base vide ne prouve rien.** Les suites pgTAP s'exécutent
+    sur la base réelle, qui contient de vraies personnes. Elles ne comptent donc jamais toutes
+    les lignes d'une table : le cloisonnement s'affirme par l'absence (« aucune ligne qui ne
+    m'appartienne »), et les fixtures vivent dans un point de vente créé pour l'occasion. Le banc
+    d'essai peuple délibérément la base avant de lancer les tests, pour que cette erreur se voie
+    hors ligne.
