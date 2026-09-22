@@ -56,6 +56,28 @@ test.describe("espaces protégés", () => {
     await page.goto("/admin/pointage/historique");
     await expect(page).toHaveURL(/\/admin\/connexion$/);
   });
+
+  // Les soldes de congés et d'heures sont des données personnelles : la porte
+  // doit être fermée avant tout rendu, base joignable ou non.
+  test("les congés de la collaboratrice renvoient vers la connexion", async ({ page }) => {
+    await page.goto("/conges");
+    await expect(page).toHaveURL(/\/connexion$/);
+  });
+
+  test("ses heures renvoient vers la connexion", async ({ page }) => {
+    await page.goto("/heures");
+    await expect(page).toHaveURL(/\/connexion$/);
+  });
+
+  test("les congés de la direction renvoient vers sa connexion", async ({ page }) => {
+    await page.goto("/admin/conges");
+    await expect(page).toHaveURL(/\/admin\/connexion$/);
+  });
+
+  test("les heures de la direction renvoient vers sa connexion", async ({ page }) => {
+    await page.goto("/admin/heures");
+    await expect(page).toHaveURL(/\/admin\/connexion$/);
+  });
 });
 
 test.describe("écran de connexion collaboratrice", () => {

@@ -236,6 +236,162 @@ export type Database = {
           },
         ]
       }
+      hours_ledger: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          id: string
+          kind: string
+          local_date: string
+          minutes: number
+          note: string | null
+          source_ref: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          id?: string
+          kind: string
+          local_date: string
+          minutes: number
+          note?: string | null
+          source_ref?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          id?: string
+          kind?: string
+          local_date?: string
+          minutes?: number
+          note?: string | null
+          source_ref?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hours_ledger_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_ledger: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          days: number
+          employee_id: string
+          id: string
+          kind: string
+          note: string | null
+          occurred_on: string
+          period_start: string
+          source_ref: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          days: number
+          employee_id: string
+          id?: string
+          kind: string
+          note?: string | null
+          occurred_on: string
+          period_start: string
+          source_ref?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          days?: number
+          employee_id?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          occurred_on?: string
+          period_start?: string
+          source_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_ledger_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_requests: {
+        Row: {
+          admin_comment: string | null
+          created_at: string
+          days: number
+          decided_at: string | null
+          decided_by: string | null
+          employee_id: string
+          end_date: string
+          end_half: string | null
+          id: string
+          justification_path: string | null
+          reason: string | null
+          start_date: string
+          start_half: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_comment?: string | null
+          created_at?: string
+          days: number
+          decided_at?: string | null
+          decided_by?: string | null
+          employee_id: string
+          end_date: string
+          end_half?: string | null
+          id?: string
+          justification_path?: string | null
+          reason?: string | null
+          start_date: string
+          start_half?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_comment?: string | null
+          created_at?: string
+          days?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          employee_id?: string
+          end_date?: string
+          end_half?: string | null
+          id?: string
+          justification_path?: string | null
+          reason?: string | null
+          start_date?: string
+          start_half?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_attempts: {
         Row: {
           created_at: string
@@ -470,6 +626,56 @@ export type Database = {
         }
         Relationships: []
       }
+      recovery_requests: {
+        Row: {
+          admin_comment: string | null
+          created_at: string
+          date: string
+          decided_at: string | null
+          decided_by: string | null
+          employee_id: string
+          id: string
+          minutes: number
+          mode: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_comment?: string | null
+          created_at?: string
+          date: string
+          decided_at?: string | null
+          decided_by?: string | null
+          employee_id: string
+          id?: string
+          minutes: number
+          mode: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_comment?: string | null
+          created_at?: string
+          date?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          employee_id?: string
+          id?: string
+          minutes?: number
+          mode?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       settings: {
         Row: {
           key: string
@@ -664,6 +870,77 @@ export type Database = {
           p_occurred_at: string
           p_reason: string
         }
+        Returns: string
+      }
+      accrue_monthly_leave: { Args: { p_at?: string }; Returns: number }
+      admin_adjust_hours: {
+        Args: { p_employee_id: string; p_minutes: number; p_note: string }
+        Returns: string
+      }
+      admin_adjust_leave: {
+        Args: { p_days: number; p_employee_id: string; p_note: string }
+        Returns: string
+      }
+      admin_decide_leave: {
+        Args: { p_approve: boolean; p_comment?: string; p_request_id: string }
+        Returns: undefined
+      }
+      admin_decide_recovery: {
+        Args: { p_approve: boolean; p_comment?: string; p_request_id: string }
+        Returns: undefined
+      }
+      admin_leave_overlaps: {
+        Args: { p_employee_id: string; p_from: string; p_to: string }
+        Returns: {
+          display_name: string
+          employee_id: string
+          end_date: string
+          start_date: string
+        }[]
+      }
+      apply_planning_recovery: {
+        Args: {
+          p_date: string
+          p_employee_id: string
+          p_minutes: number
+          p_mode: string
+          p_source_ref: string
+        }
+        Returns: boolean
+      }
+      cancel_leave_request: { Args: { p_request_id: string }; Returns: undefined }
+      close_leave_period: { Args: { p_at?: string }; Returns: number }
+      compute_daily_hours: { Args: { p_date?: string }; Returns: number }
+      count_leave_days: {
+        Args: {
+          p_employee_id: string
+          p_end_half?: string
+          p_from: string
+          p_start_half?: string
+          p_to: string
+        }
+        Returns: number
+      }
+      hours_balance: { Args: { p_employee_id?: string }; Returns: number }
+      leave_balance: {
+        Args: { p_employee_id?: string; p_period_start?: string }
+        Returns: number
+      }
+      leave_period_start: { Args: { p_date?: string }; Returns: string }
+      leave_rules: { Args: never; Returns: Json }
+      request_leave: {
+        Args: {
+          p_end_date: string
+          p_end_half?: string
+          p_justification_path?: string
+          p_reason?: string
+          p_start_date: string
+          p_start_half?: string
+        }
+        Returns: string
+      }
+      request_recovery: {
+        Args: { p_date: string; p_minutes: number; p_mode: string }
         Returns: string
       }
       admin_create_employee: {

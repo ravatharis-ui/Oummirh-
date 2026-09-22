@@ -339,3 +339,59 @@ insufficient_privilege`.** Sur un projet hébergé, `storage.objects` n'appartie
   - **Un test qui échoue doit nommer le coupable.** « Attendu 0, obtenu 14 » a coûté un
     aller-retour avec le propriétaire. Les assertions de cloisonnement utilisent désormais
     `set_eq` contre un ensemble vide, qui liste les tables ou les fonctions fautives.
+
+- **Phases 6 et 7** (congés puis heures — les deux sont des ledgers, et les deux ajustent le
+  planning par le même mécanisme) :
+  - **Un solde n'est jamais un nombre stocké.** `leave_ledger` et `hours_ledger` ne contiennent
+    que des mouvements horodatés ; le solde est leur somme. Corriger un solde, c'est **ajouter**
+    une ligne qui dit pourquoi. Aucune des deux tables n'a la moindre politique d'écriture RLS,
+    pour personne : tout passe par des fonctions `security definer`.
+  - **Le décompte des congés est recalculé à la validation**, pas seulement à la demande. Entre
+    les deux, le planning a pu changer et un jour férié a pu être ajouté ; c'est le jour de la
+    décision qui fait foi.
+  - **Le décompte existe deux fois, volontairement** : `count_leave_days()` en SQL fait autorité,
+    `domain/count.ts` alimente l'aperçu affiché pendant qu'elle choisit ses dates. Les deux
+    suivent la même règle et sont éprouvés sur les mêmes cas (26 tests Vitest, 41 assertions
+    pgTAP). Le seul moyen d'éviter la duplication aurait été un aller-retour serveur à chaque
+    clic de calendrier.
+  - **Ne comptent pas** : les jours hors semaine de travail (samedi selon le mode), les fériés de
+    La Réunion — dont le 20 décembre —, et les journées déjà planifiées en `rest` ou `school`.
+    Poser un congé sur son jour de repos ne coûte rien.
+  - **Règle d'acquisition** : `ouvrables` par défaut (2,5 j/mois, 30 j/an). Le mode `ouvres`
+    (2,08 j/mois, 25 j/an) existe et se change dans les réglages. La V1 annonçait « 25 jours à
+    2,5 j/mois », ce qui est arithmétiquement impossible.
+  - **Les tâches planifiées sont idempotentes par index unique**, pas par calendrier : acquisition
+    (`employee_id, occurred_on`), report et expiration (`employee_id, period_start`), écart
+    quotidien (`employee_id, local_date`). Les routes cron tournent donc **tous les jours** plutôt
+    qu'une fois par mois — une journée où la plateforme hoquette ne fait perdre les congés de
+    personne, et le lendemain rattrape.
+  - **Une journée sans départ pointé n'écrit aucun écart d'heures.** Ce n'est pas une journée à
+    zéro heure, c'est une journée dont on ne sait rien. Écrire « −7 h » ferait porter à la
+    collaboratrice le prix d'un téléphone déchargé, et la direction a déjà une alerte pour ça.
+  - **Le plafond d'une récupération est le solde moins les demandes en attente.** Sans cette
+    soustraction, trois demandes de deux heures passeraient toutes les trois avec un solde de
+    deux heures.
+  - **`apply_planning_recovery` repart de l'horaire d'origine**, jamais de l'horaire courant :
+    rejouer l'événement ne décale pas la journée deux fois. Ce qui est stocké n'est pas « moins
+    une heure » mais « commence à 10 h ».
+  - **`recovery` est devenue une quatrième source protégée** du planning. Sans cela, une
+    duplication de semaine effacerait une récupération accordée, et la collaboratrice serait
+    attendue à 9 h un jour où la direction lui a dit d'arriver à 11 h.
+  - **Le module heures n'écrit jamais dans `planning_entries`**, et le module congés non plus.
+    Tous deux annoncent leur décision ; le planning en tire les conséquences. C'est la règle
+    d'architecture, et c'est aussi ce qui permet de désactiver un module sans casser l'autre.
+  - **`now()` est l'heure de début de transaction.** Une originale et sa correction écrites dans
+    la même transaction portent le même `created_at`, et `effective_time_clocks` tranchait alors
+    au hasard — une migration sans rapport a suffi à retourner l'assertion. La vue dit désormais
+    explicitement qu'**une correction l'emporte toujours sur une originale**, ce que le mot
+    « correction » voulait dire depuis le début.
+  - **`set local` survit à `reset role`.** Dans un test pgTAP, revenir au rôle superutilisateur ne
+    remet pas les claims JWT : les assertions « côté serveur » héritaient de la session de la
+    collaboratrice testée juste avant. Les suites remettent maintenant `request.jwt.claims` à vide
+    en même temps que le rôle.
+  - **Un garde de lecture doit laisser passer le serveur.** `leave_balance` et `hours_balance`
+    refusent le solde d'autrui à une _session_ ; sans session (`auth.uid()` nul), l'appelant est
+    la tâche planifiée ou un test, et la question ne se pose pas.
+  - **L'export CSV est en point-virgule, décimales à la virgule, avec un BOM.** C'est ce qu'Excel
+    en français attend : un fichier qui s'ouvre en une seule colonne, ou qui affiche « AurÃ©lie »,
+    n'est pas un export.

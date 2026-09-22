@@ -283,6 +283,55 @@ bord Supabase : `Storage` → **New bucket** → nom `selfies`, laissez **Public
 
 ---
 
+## Étape 9 — Congés et heures
+
+Comme à l'étape 8 : rien à installer, relancez le bouton **« Base de données »** après le
+déploiement.
+
+### Vérifier les congés
+
+1. Sur le téléphone, onglet **Congés**. Le solde s'affiche, avec la période (juin → mai).
+2. Choisissez des dates : l'écran annonce **combien de jours seront décomptés**, et le solde
+   avant / après. Les dimanches, les jours fériés et vos jours de repos ne comptent pas.
+3. Envoyez. Espace direction → **Congés** : la demande apparaît, avec un avertissement si une
+   collègue du même point de vente est déjà absente sur ces dates.
+4. **Valider** : les jours partent du solde, et le planning se remplit tout seul en « Congé ».
+5. **Annuler** un congé validé (direction seulement) : les jours reviennent, et les journées se
+   libèrent dans le planning.
+
+### Vérifier les heures
+
+1. Le solde d'heures se remplit **tout seul**, à partir des pointages : à chaque départ pointé,
+   l'écart entre le réel et le planning est enregistré.
+2. Sur le téléphone, onglet **Heures** : « Mon solde d'heures », puis **« ⚡ Prendre mes heures
+   supp »**. Choisissez d'arriver plus tard ou de partir plus tôt, un jour à venir, une durée.
+3. Espace direction → **Heures** : la demande se valide **en un clic**. Le planning du jour se
+   décale immédiatement.
+4. **Export CSV** : le fichier s'ouvre directement dans Excel, colonnes séparées.
+
+Pour tester sans attendre un vrai pointage, la direction peut créditer un solde depuis
+**Heures → Ajuster** (un motif est obligatoire, et l'ajustement est tracé).
+
+### Ce qui tourne tout seul
+
+| Quand       | Ce qui se passe                                             |
+| ----------- | ----------------------------------------------------------- |
+| Chaque nuit | Acquisition mensuelle des congés (une seule fois par mois). |
+| Chaque nuit | Report ou expiration au changement de période, le 1er juin. |
+| Chaque nuit | Calcul des heures de la veille, en filet du calcul à chaud. |
+
+Ces tâches peuvent tourner tous les jours sans rien fausser : elles sont écrites pour ne jamais
+créditer deux fois la même chose.
+
+### À vérifier une fois dans Vercel
+
+L'application utilise cinq tâches planifiées. Les offres gratuites de Vercel en limitent le
+nombre et la fréquence. Dans l'interface Vercel, onglet **Cron Jobs**, vérifiez qu'elles
+apparaissent toutes ; si certaines manquent, dites-le moi et je regrouperai les tâches
+quotidiennes en une seule.
+
+---
+
 ## Ce qui se passe ensuite
 
 À chaque phase terminée, le déroulé est toujours le même :

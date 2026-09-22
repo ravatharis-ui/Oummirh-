@@ -154,4 +154,39 @@ export const planningEventHandlers: Record<string, EventHandler> = {
   "swaps.approved": async (event) => {
     await applyRange(readRange(event, "échange"), "work", "swap");
   },
+
+  /**
+   * Une récupération accordée décale une journée : elle commence plus tard, ou
+   * elle finit plus tôt. Le module heures a écrit le débit, le planning écrit
+   * l'horaire — et la fonction repart de l'horaire d'origine, donc un rejeu ne
+   * décale pas deux fois.
+   */
+  "heures.recovery_approved": async (event) => {
+    const payload = asRecord(event.payload);
+
+    const employeeId = asString(payload.employee_id);
+    const date = asString(payload.date);
+    const mode = asString(payload.mode);
+    const ref = asString(payload.id) ?? event.id;
+    const minutes = typeof payload.minutes === "number" ? payload.minutes : null;
+
+    if (!employeeId || !date || !mode || minutes === null) {
+      throw new Error(
+        `Événement de récupération inexploitable : il manque la journée ou la durée (${event.id}).`,
+      );
+    }
+
+    const admin = createAdminSupabaseClient();
+    const { error } = await admin.rpc("apply_planning_recovery", {
+      p_employee_id: employeeId,
+      p_date: date,
+      p_mode: mode,
+      p_minutes: minutes,
+      p_source_ref: ref,
+    });
+
+    if (error) {
+      throw new Error(`Planning non ajusté : ${error.message}`);
+    }
+  },
 };
