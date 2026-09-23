@@ -1069,6 +1069,17 @@ export type Database = {
     }
     Functions: {
       accrue_monthly_leave: { Args: { p_at?: string }; Returns: number }
+      admin_add_document: {
+        Args: {
+          p_category: string
+          p_employee_id: string
+          p_period_month?: string
+          p_size_bytes: number
+          p_storage_path: string
+          p_title: string
+        }
+        Returns: string
+      }
       admin_adjust_hours: {
         Args: { p_employee_id: string; p_minutes: number; p_note: string }
         Returns: string
@@ -1163,19 +1174,10 @@ export type Database = {
           start_date: string
         }[]
       }
-      admin_add_document: {
-        Args: {
-          p_category: string
-          p_employee_id: string
-          p_period_month?: string
-          p_size_bytes: number
-          p_storage_path: string
-          p_title: string
-        }
+      admin_remove_document: {
+        Args: { p_document_id: string }
         Returns: string
       }
-      admin_remove_document: { Args: { p_document_id: string }; Returns: string }
-      mark_document_viewed: { Args: { p_document_id: string }; Returns: undefined }
       admin_remove_public_holiday: {
         Args: { p_date: string }
         Returns: boolean
@@ -1399,6 +1401,10 @@ export type Database = {
         }[]
       }
       mark_all_notifications_read: { Args: never; Returns: number }
+      mark_document_viewed: {
+        Args: { p_document_id: string }
+        Returns: undefined
+      }
       mark_event_failed: {
         Args: { p_error: string; p_id: string }
         Returns: undefined
@@ -1406,6 +1412,13 @@ export type Database = {
       mark_event_processed: { Args: { p_id: string }; Returns: undefined }
       mark_notification_emailed: { Args: { p_id: string }; Returns: undefined }
       mark_selfies_purged: { Args: { p_paths: string[] }; Returns: number }
+      midday_boundary: {
+        Args: never
+        Returns: {
+          afternoon_start: string
+          morning_end: string
+        }[]
+      }
       my_boutique_presence: {
         Args: { p_date: string }
         Returns: {
