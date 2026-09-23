@@ -453,6 +453,13 @@ Actions` : `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKE
 - [ ] **Le webhook Supabase** vers `/api/events/dispatch`, avec l'en-tête
       `Authorization: Bearer <EVENTS_DISPATCH_SECRET>` (étape 7).
 - [ ] **Les tâches planifiées** apparaissent dans Vercel, onglet **Cron Jobs**. Il y en a cinq.
+- [ ] **Les deux espaces de stockage existent et sont privés.** Supabase → **Storage** : il doit
+      y avoir `selfies` et `documents`, tous les deux marqués privés. Les migrations les créent,
+      mais sur un projet hébergé elles n'en ont pas toujours le droit — dans ce cas elles laissent
+      passer plutôt que de tout bloquer, et c'est à vérifier à l'œil. S'ils manquent, créez-les
+      avec exactement ces noms, en privé, et dites-le moi.
+- [ ] **Éteignez le module « Démo »** (Paramètres → Modules) une fois la chaîne de notifications
+      vérifiée. Il ne sert qu'à ça, et il n'a rien à faire sous les yeux des collaboratrices.
 - [ ] **Votre nom de domaine** dans Vercel, onglet Domains. Vercel s'occupe du certificat.
 - [ ] **Le domaine d'envoi Resend vérifié** (étape 7). Sans lui, les emails partent en spam ou ne
       partent pas — mais l'application fonctionne : les notifications dans l'application, elles,
@@ -462,8 +469,12 @@ Actions` : `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKE
 - [ ] **Les jours fériés de l'année en cours et de la suivante** (Paramètres → Jours fériés).
 - [ ] **Réglez ce qui doit l'être** : règle d'acquisition des congés, tolérance de retard, durée
       de conservation des photos (Paramètres).
-- [ ] **Faites le tour sur un téléphone** : installer l'application, se connecter, pointer, voir
-      son planning. C'est le vrai test.
+- [ ] **Faites le tour sur un téléphone** : installer l'application, se connecter, pointer
+      (photo à l'arrivée **et** au départ), voir son planning. C'est le vrai test.
+- [ ] **Vérifiez la connexion après chaque déploiement.** Ouvrez `/connexion` et cliquez : si la
+      page s'affiche mais qu'aucun bouton ne réagit, voir « Si une page s'affiche mais ne réagit à
+      rien » plus bas. C'est le défaut le plus sournois de cette application, parce qu'elle a
+      l'air d'aller bien.
 
 ### Ce qu'il ne faut pas faire
 
