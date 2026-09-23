@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
@@ -70,7 +71,16 @@ export function HoursTable({ rows }: { rows: HoursMonthRow[] }) {
           <tbody>
             {rows.map((row) => (
               <tr key={row.employeeId} className="border-b last:border-b-0">
-                <td className="py-2 font-medium">{row.displayName}</td>
+                <td className="py-2 font-medium">
+                  {/* Un prénom mène au détail : le tableau du mois dit combien,
+                      le détail dit pourquoi. */}
+                  <Link
+                    href={{ pathname: `/admin/heures/${row.employeeId}` }}
+                    className="underline underline-offset-4"
+                  >
+                    {row.displayName}
+                  </Link>
+                </td>
                 <td className="text-muted-foreground py-2">{row.boutiqueName}</td>
                 <td className="py-2 tabular-nums">
                   {row.contractMinutes === null ? "—" : formatDuration(row.contractMinutes)}

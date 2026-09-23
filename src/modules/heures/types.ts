@@ -1,5 +1,6 @@
 import type { DateString } from "@/core/time";
 
+import type { HoursDetailRow } from "./domain/detail";
 import type { RecoveryMode, RecoveryStatus } from "./domain/recovery";
 
 export interface RecoveryRequestRow {
@@ -30,6 +31,8 @@ export interface MyHoursState {
   pendingMinutes: number;
   availableMinutes: number;
   movements: HoursMovementRow[];
+  /** Le même compteur, mouvement par mouvement, tel qu'il s'affiche. */
+  detail: HoursDetailRow[];
   requests: RecoveryRequestRow[];
   /** Ses journées travaillées à venir, seules éligibles à une récupération. */
   eligibleDays: { date: DateString; startTime: string; endTime: string }[];
@@ -45,6 +48,15 @@ export interface HoursMonthRow {
   workedMinutes: number;
   monthMinutes: number;
   balanceMinutes: number;
+}
+
+/** Le compteur d'une collaboratrice, vu par la direction. */
+export interface EmployeeHoursDetail {
+  employeeId: string;
+  displayName: string;
+  boutiqueName: string;
+  balanceMinutes: number;
+  rows: HoursDetailRow[];
 }
 
 export type { ActionResult } from "@/core/actions";

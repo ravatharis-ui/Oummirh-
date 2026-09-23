@@ -4,6 +4,7 @@ import { requireAdmin, requireEmployee } from "@/core/auth";
 import { createServerSupabaseClient } from "@/core/db/server";
 import { addDays, todayInReunion, workedMinutes, type DateString } from "@/core/time";
 
+import { buildHoursDetail } from "../domain/detail";
 import { cumulativeMinutes, monthlyTotals, type HoursMovement } from "../domain/monthly";
 import {
   availableMinutes,
@@ -12,7 +13,54 @@ import {
   type RecoveryMode,
   type RecoveryStatus,
 } from "../domain/recovery";
-import type { HoursMonthRow, HoursMovementRow, MyHoursState, RecoveryRequestRow } from "../types";
+import type {
+  EmployeeHoursDetail,
+  HoursMonthRow,
+  HoursMovementRow,
+  MyHoursState,
+  RecoveryRequestRow,
+} from "../types";
+
+type Supabase = Awaited<ReturnType<typeof createServerSupabaseClient>>;
+
+/**
+ * Le temps réellement travaillé, pour les seules journées que le compteur cite.
+ *
+ * Borné aux dates du ledger plutôt qu'à une période : la liste affichée est déjà
+ * limitée, et demander l'historique complet du pointage pour l'afficher à côté
+ * serait payer une lecture qu'on jette.
+ */
+async function workedByDate(
+  supabase: Supabase,
+  movements: readonly { localDate: string; kind: string }[],
+): Promise<Map<string, number>> {
+  const dates = [
+    ...new Set(movements.filter((m) => m.kind === "daily_delta").map((m) => m.localDate)),
+  ];
+
+  if (dates.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from("daily_worked_time")
+    .select("local_date, worked_minutes")
+    .in("local_date", dates);
+
+  if (error) {
+    // Le détail s'affichera sans « prévu / réel ». L'écart, lui, reste juste :
+    // il vient du ledger, pas d'ici.
+    console.error("[heures] Temps travaillé illisible", error.message);
+    return new Map();
+  }
+
+  const worked = new Map<string, number>();
+  for (const row of data ?? []) {
+    if (row.local_date !== null && row.worked_minutes !== null) {
+      worked.set(row.local_date, row.worked_minutes);
+    }
+  }
+
+  return worked;
+}
 
 const RECOVERY_COLUMNS =
   "id, employee_id, date, mode, minutes, status, admin_comment, decided_at, created_at";
@@ -103,6 +151,7 @@ export async function getMyHoursState(): Promise<MyHoursState> {
   }));
 
   const balanceMinutes = Number(balanceResult.data ?? 0);
+  const detail = buildHoursDetail(movements, await workedByDate(supabase, movements));
 
   return {
     employeeId,
@@ -110,6 +159,7 @@ export async function getMyHoursState(): Promise<MyHoursState> {
     pendingMinutes,
     availableMinutes: availableMinutes(balanceMinutes, pendingMinutes),
     movements,
+    detail,
     requests,
     eligibleDays: (planningResult.data ?? [])
       .filter((row) => row.start_time && row.end_time && !takenDates.has(row.date))
@@ -244,4 +294,57 @@ export async function getHoursMonth(
     });
 
   return { month: reference, rows };
+}
+
+/**
+ * Le compteur d'une collaboratrice, mouvement par mouvement, pour la direction.
+ *
+ * Le même détail que celui qu'elle voit, volontairement : quand la direction et
+ * la collaboratrice regardent le même chiffre, la conversation porte sur la
+ * journée en cause, pas sur l'écran qui aurait tort.
+ */
+export async function getEmployeeHoursDetail(
+  employeeId: string,
+): Promise<EmployeeHoursDetail | null> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+
+  const [{ data: employee }, { data: rawMovements }, { data: balance }] = await Promise.all([
+    supabase
+      .from("employees")
+      .select("id, display_name, boutique_id")
+      .eq("id", employeeId)
+      .maybeSingle(),
+    supabase
+      .from("hours_ledger")
+      .select("id, kind, minutes, local_date, note")
+      .eq("employee_id", employeeId)
+      .order("local_date", { ascending: false })
+      .limit(180),
+    supabase.rpc("hours_balance", { p_employee_id: employeeId }),
+  ]);
+
+  if (!employee) return null;
+
+  const movements = (rawMovements ?? []).map((row) => ({
+    id: row.id,
+    kind: row.kind,
+    minutes: row.minutes,
+    localDate: row.local_date,
+    note: row.note,
+  }));
+
+  const { data: boutique } = await supabase
+    .from("boutiques")
+    .select("name")
+    .eq("id", employee.boutique_id)
+    .maybeSingle();
+
+  return {
+    employeeId: employee.id,
+    displayName: employee.display_name,
+    boutiqueName: boutique?.name ?? "",
+    balanceMinutes: Number(balance ?? 0),
+    rows: buildHoursDetail(movements, await workedByDate(supabase, movements)),
+  };
 }

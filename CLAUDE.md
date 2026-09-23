@@ -591,3 +591,34 @@ template` savait appliquer une semaine type que rien ne savait créer. La fermet
     (`is distinct from`, donc deux `null` sont égaux et l'assertion échoue). Écrire l'assertion
     avec `ok(... is not null)` aurait été plus court et aurait laissé le banc d'essai en retard
     sur le projet réel — la leçon de `storage.protect_delete`.
+
+- **Détail du compteur d'heures** (question du propriétaire : « est-ce qu'il y a un décompte par
+  personne qui montre les heures faites en plus et en moins ? ») :
+  - **Le calcul existait depuis la Phase 7 ; personne ne pouvait le lire.** Les deux écrans
+    n'affichaient que des totaux — un solde chez la collaboratrice, un tableau mensuel chez la
+    direction. `getMyHoursState` chargeait déjà les mouvements jour par jour et l'écran ne les
+    rendait jamais. Même oubli que les selfies enregistrés que rien n'ouvrait : une donnée qu'on
+    calcule sans jamais la montrer n'est pas une fonctionnalité.
+  - **`plannedMinutes` est déduit, pas relu** : l'écart d'une journée **est** réel − prévu, donc
+    prévu = réel − écart. Une seconde lecture du planning pourrait diverger de ce que le ledger a
+    figé — le planning a pu changer depuis, et c'est le jour du calcul qui fait foi.
+  - **Le même composant des deux côtés.** Quand la direction et la collaboratrice regardent le
+    même chiffre, la conversation porte sur la journée en cause et non sur l'écran qui aurait
+    tort.
+  - **Une journée dit ce qui était prévu et ce qui a été fait**, pas seulement l'écart :
+    « −15 min » sans « prévu 7 h, réel 6 h 45 » n'est pas vérifiable, et un compteur qu'on ne
+    peut pas recompter soi-même est un compteur qu'il faut croire sur parole.
+  - **Une récupération ou un ajustement n'affiche ni prévu ni réel.** Ce ne sont pas des
+    journées ; écrire « prévu 0 h » laisserait croire qu'elle n'était pas attendue ce jour-là.
+  - **L'écart porte sur la journée entière**, donc arriver un quart d'heure en retard puis partir
+    un quart d'heure plus tard fait zéro. La ponctualité se lit ailleurs — l'écart d'arrivée, dans
+    Pointage → Historique. Deux questions différentes, deux écrans.
+  - **Quatrième porte rouverte par la plateforme**, trouvée par l'audit `0013` sur le projet
+    réel : `authenticated` avait insert, update et delete sur `effective_time_clocks` et
+    `daily_worked_time`. Nos migrations ne leur accordaient que `select` — mais
+    `alter default privileges ... grant all on tables` s'applique aussi aux **vues**, que
+    PostgreSQL range parmi les tables. Réponse : `revoke_view_write_privileges()`, à rappeler en
+    fin de toute migration créant une vue.
+  - **Le banc d'essai hors ligne n'accordait les droits par défaut que sur les fonctions.** Il le
+    fait désormais aussi sur les tables, et il reproduit l'échec avant la correction : **un banc
+    d'essai moins permissif que la plateforme valide des migrations qui ne referment rien.**

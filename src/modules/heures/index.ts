@@ -24,6 +24,14 @@ export {
 } from "./domain/recovery";
 
 export {
+  buildHoursDetail,
+  detailTotal,
+  hoursKindLabel,
+  HOURS_KIND_LABELS,
+  type HoursDetailRow,
+} from "./domain/detail";
+
+export {
   cumulativeMinutes,
   monthlyTotals,
   toCsv,
@@ -38,11 +46,23 @@ export {
   type RecoveryRequestInput,
 } from "./schemas";
 
-export type { HoursMonthRow, HoursMovementRow, MyHoursState, RecoveryRequestRow } from "./types";
+export type {
+  EmployeeHoursDetail,
+  HoursMonthRow,
+  HoursMovementRow,
+  MyHoursState,
+  RecoveryRequestRow,
+} from "./types";
 
-export { getHoursMonth, getMyHoursState, getRecoveryRequests } from "./server/queries";
+export {
+  getEmployeeHoursDetail,
+  getHoursMonth,
+  getMyHoursState,
+  getRecoveryRequests,
+} from "./server/queries";
 export { adjustHoursBalance, decideRecovery, requestRecovery } from "./server/actions";
 
 export { MyHours } from "./ui/collab/my-hours";
+export { HoursDetailList } from "./ui/hours-detail-list";
 export { HoursTable } from "./ui/admin/hours-table";
 export { RecoveryList } from "./ui/admin/recovery-list";

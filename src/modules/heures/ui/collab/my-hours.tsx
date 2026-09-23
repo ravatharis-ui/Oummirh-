@@ -25,6 +25,7 @@ import {
   type RecoveryMode,
 } from "../../domain/recovery";
 import { requestRecovery } from "../../server/actions";
+import { HoursDetailList } from "../hours-detail-list";
 import type { MyHoursState } from "../../types";
 
 const STATUS_VARIANT = {
@@ -113,6 +114,15 @@ export function MyHours({ state }: { state: MyHoursState }) {
               ))}
             </ul>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Le détail de mon compteur</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <HoursDetailList rows={state.detail} />
         </CardContent>
       </Card>
 

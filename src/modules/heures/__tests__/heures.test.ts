@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { buildHoursDetail, detailTotal, hoursKindLabel } from "../domain/detail";
+
 import { cumulativeMinutes, monthlyTotals, toCsv, type HoursMovement } from "../domain/monthly";
 import {
   availableMinutes,
@@ -139,5 +141,84 @@ describe("toCsv", () => {
 
   it("double les guillemets d'une cellule", () => {
     expect(toCsv([['il a dit "oui"']])).toBe('"il a dit ""oui"""');
+  });
+});
+
+describe("le détail du compteur", () => {
+  const worked = new Map([
+    ["2026-03-02", 435], // 7 h 15 travaillées
+    ["2026-03-03", 405], // 6 h 45 travaillées
+  ]);
+
+  it("déduit le prévu du réel et de l'écart, plutôt que de relire le planning", () => {
+    // Elle est restée 15 min de plus : 7 h 15 faites pour 7 h prévues.
+    const [late] = buildHoursDetail(
+      [{ id: "1", kind: "daily_delta", minutes: 15, localDate: "2026-03-02", note: null }],
+      worked,
+    );
+
+    expect(late?.plannedMinutes).toBe(420);
+    expect(late?.workedMinutes).toBe(435);
+    expect(late?.minutes).toBe(15);
+  });
+
+  it("un retard à l'arrivée donne un écart négatif, et le prévu reste le prévu", () => {
+    const [short] = buildHoursDetail(
+      [{ id: "2", kind: "daily_delta", minutes: -15, localDate: "2026-03-03", note: null }],
+      worked,
+    );
+
+    expect(short?.plannedMinutes).toBe(420);
+    expect(short?.workedMinutes).toBe(405);
+    expect(short?.minutes).toBe(-15);
+  });
+
+  it("une récupération ou un ajustement n'affiche ni prévu ni réel", () => {
+    // Écrire « prévu 0 h » laisserait croire qu'elle n'était pas attendue.
+    const rows = buildHoursDetail(
+      [
+        { id: "3", kind: "recovery", minutes: -60, localDate: "2026-03-04", note: "Part plus tôt" },
+        { id: "4", kind: "adjustment", minutes: 30, localDate: "2026-03-05", note: "Geste" },
+      ],
+      worked,
+    );
+
+    for (const row of rows) {
+      expect(row.plannedMinutes).toBeNull();
+      expect(row.workedMinutes).toBeNull();
+      expect(row.note).not.toBeNull();
+    }
+  });
+
+  it("une journée dont le temps travaillé est inconnu n'invente pas de prévu", () => {
+    const [unknown] = buildHoursDetail(
+      [{ id: "5", kind: "daily_delta", minutes: 20, localDate: "2026-09-09", note: null }],
+      worked,
+    );
+
+    expect(unknown?.plannedMinutes).toBeNull();
+    // L'écart, lui, vient du ledger : il reste juste.
+    expect(unknown?.minutes).toBe(20);
+  });
+
+  it("le total affiché est la somme de ce qui est affiché", () => {
+    const rows = buildHoursDetail(
+      [
+        { id: "6", kind: "daily_delta", minutes: 15, localDate: "2026-03-02", note: null },
+        { id: "7", kind: "daily_delta", minutes: -15, localDate: "2026-03-03", note: null },
+        { id: "8", kind: "recovery", minutes: -60, localDate: "2026-03-04", note: null },
+      ],
+      worked,
+    );
+
+    expect(detailTotal(rows)).toBe(-60);
+  });
+
+  it("chaque nature de mouvement a un libellé en français", () => {
+    expect(hoursKindLabel("daily_delta")).toBe("Journée travaillée");
+    expect(hoursKindLabel("recovery")).toBe("Récupération prise");
+    expect(hoursKindLabel("adjustment")).toBe("Ajustement de la direction");
+    // Une nature ajoutée plus tard ne casse pas l'écran.
+    expect(hoursKindLabel("quelque_chose")).toBe("Mouvement");
   });
 });
