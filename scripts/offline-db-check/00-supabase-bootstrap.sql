@@ -45,6 +45,15 @@ grant execute on all functions in schema auth to anon, authenticated, service_ro
 alter default privileges for role postgres in schema public
   grant all on functions to anon, authenticated, service_role;
 
+-- Et sur les tables — **vues comprises**, que PostgreSQL range dans la même
+-- catégorie. C'est ce que fait réellement Supabase, et ne pas l'imiter a coûté
+-- une exécution de l'audit sur le projet : `effective_time_clocks` et
+-- `daily_worked_time` étaient écrivables depuis un navigateur là-bas, et pas
+-- ici. Le banc d'essai doit être au moins aussi permissif que la plateforme,
+-- sinon il valide des migrations qui ne referment rien.
+alter default privileges for role postgres in schema public
+  grant all on tables to anon, authenticated, service_role;
+
 -- Storage. Only what a migration touches: the bucket registry, the object table
 -- the policies are written against, and the folder helper Supabase ships.
 create schema if not exists storage;
