@@ -1505,7 +1505,12 @@ export type Database = {
       planning_protected_sources: { Args: never; Returns: string[] }
       pointage_run_checks: { Args: { p_at?: string }; Returns: Json }
       record_job_run: {
-        Args: { p_error?: string; p_job: string; p_ok: boolean; p_summary?: Json }
+        Args: {
+          p_error?: string
+          p_job: string
+          p_ok: boolean
+          p_summary?: Json
+        }
         Returns: undefined
       }
       request_leave: {
