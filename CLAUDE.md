@@ -622,3 +622,22 @@ template` savait appliquer une semaine type que rien ne savait créer. La fermet
   - **Le banc d'essai hors ligne n'accordait les droits par défaut que sur les fonctions.** Il le
     fait désormais aussi sur les tables, et il reproduit l'échec avant la correction : **un banc
     d'essai moins permissif que la plateforme valide des migrations qui ne referment rien.**
+  - **« Le dernier pointage » doit être une question qui a une seule réponse.**
+    Cinq assertions du pointage se sont retournées sur le projet réel après une migration qui ne
+    touchait qu'aux droits des vues. Cause : `now()` est l'heure de début de transaction, donc
+    plusieurs pointages écrits dans la même transaction portent le **même** `occurred_at`, et
+    `order by occurred_at desc limit 1` en rend un **au hasard**. `clock_event` a laissé pointer
+    un départ alors qu'une pause était ouverte.
+    C'est le défaut déjà corrigé en Phase 7 — sur la vue `effective_time_clocks`, pas dans la
+    fonction, où la même ambiguïté est restée. La colonne `time_clocks.seq` départage désormais
+    ce que l'horloge ne peut pas départager ; `occurred_at` reste la clé de tri principale.
+    En service réel chaque pointage est sa propre transaction, donc personne n'a jamais été gêné
+    — mais une règle métier dont le résultat dépend du plan choisi par Postgres n'est pas une
+    règle, et une suite de tests qui se retourne toute seule ne prouve plus rien.
+  - **Une assertion ajoutée après coup doit échouer sans le correctif**, sinon elle ne prouve
+    rien. Les trois nouvelles assertions de `0006` ont été vérifiées en désactivant la colonne
+    `seq` : le fichier s'arrête sur « column "seq" does not exist ». Le corollaire de la règle du
+    fichier de test jamais exécuté.
+  - **Une vue recréée renaît écrivable.** Toute migration qui touche à une vue se termine par
+    `select public.revoke_view_write_privileges();` — la plateforme réapplique ses droits par
+    défaut à chaque `create or replace view`.

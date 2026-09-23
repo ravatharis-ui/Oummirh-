@@ -6,7 +6,7 @@
 -- correction n'efface pas l'originale, et un jour d'école n'est pas un retard.
 
 begin;
-select plan(46);
+select plan(49);
 
 -- ---------------------------------------------------------------- fixtures --
 insert into public.boutiques (id, code, name, kind, sort_order) values
@@ -433,6 +433,46 @@ select is(
 );
 
 reset role;
+set local request.jwt.claims = '';
+
+-- ============================== « le dernier pointage » n'a qu'une réponse ===
+-- `now()` est l'heure de début de transaction : deux pointages écrits dans la
+-- même transaction portent le **même** `occurred_at`. Sans colonne d'ordre,
+-- « order by occurred_at desc limit 1 » rend l'un des deux au hasard — et c'est
+-- exactement ce qui a retourné cinq assertions de ce fichier sur le projet
+-- réel, après une migration qui ne touchait qu'aux droits des vues.
+insert into public.time_clocks (employee_id, boutique_id, event_type, local_date)
+values
+  ('dddddddd-0000-4000-8000-000000000202', 'bbbbbbbb-0000-4000-8000-000000000201',
+   'clock_in', '2026-02-02'),
+  ('dddddddd-0000-4000-8000-000000000202', 'bbbbbbbb-0000-4000-8000-000000000201',
+   'break_start', '2026-02-02');
+
+select is(
+  (select count(distinct occurred_at) from public.time_clocks
+    where employee_id = 'dddddddd-0000-4000-8000-000000000202'
+      and local_date = '2026-02-02'),
+  1::bigint,
+  'Deux pointages de la même transaction portent bien le même instant'
+);
+
+select is(
+  (select count(distinct seq) from public.time_clocks
+    where employee_id = 'dddddddd-0000-4000-8000-000000000202'
+      and local_date = '2026-02-02'),
+  2::bigint,
+  'Mais deux numéros d''ordre différents'
+);
+
+select is(
+  (select tc.event_type from public.time_clocks tc
+    where tc.employee_id = 'dddddddd-0000-4000-8000-000000000202'
+      and tc.local_date = '2026-02-02'
+    order by tc.occurred_at desc, tc.seq desc
+    limit 1),
+  'break_start',
+  'Le tri (occurred_at, seq) rend toujours le dernier écrit, jamais l''autre'
+);
 
 select * from finish();
 rollback;
