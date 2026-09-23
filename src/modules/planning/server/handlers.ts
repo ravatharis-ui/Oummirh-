@@ -135,8 +135,30 @@ export const planningEventHandlers: Record<string, EventHandler> = {
     await context.notify(userId, "planning.entry_changed", event.payload);
   },
 
+  /**
+   * Un congé ne se pose pas comme un remplacement : ses journées de bord peuvent
+   * être des demi-journées, et une demi-journée raccourcit la journée de travail
+   * au lieu de la remplacer. Sinon le solde compterait 0,5 jour pendant que le
+   * planning afficherait une absence entière — et la direction ne verrait pas
+   * qu'il reste une matinée à couvrir.
+   */
   "conges.request_approved": async (event) => {
-    await applyRange(readRange(event, "congé approuvé"), "leave", "leave");
+    const range = readRange(event, "congé approuvé");
+    const payload = asRecord(event.payload);
+
+    const admin = createAdminSupabaseClient();
+    const { error } = await admin.rpc("apply_planning_leave", {
+      p_employee_id: range.employeeId,
+      p_request_id: range.ref,
+      p_from: range.from,
+      p_to: range.to,
+      ...(asString(payload.start_half) ? { p_start_half: asString(payload.start_half) } : {}),
+      ...(asString(payload.end_half) ? { p_end_half: asString(payload.end_half) } : {}),
+    });
+
+    if (error) {
+      throw new Error(`Congé non posé au planning : ${error.message}`);
+    }
   },
 
   "conges.request_cancelled": async (event) => {

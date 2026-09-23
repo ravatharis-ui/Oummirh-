@@ -399,6 +399,39 @@ autour.
 
 ---
 
+## Étape 12 — Le coffre-fort
+
+Relancez le bouton **« Base de données »** après le déploiement.
+
+### Déposer les fiches de paie du mois
+
+1. Espace direction → **Documents** → **Déposer les fiches de paie du mois**.
+2. Choisissez le mois, puis sélectionnez **tous les PDF d'un coup**.
+3. L'application associe chaque fichier à une collaboratrice d'après son nom. Ce qu'elle n'a pas
+   su reconnaître reste à associer à la main — et le bouton d'envoi reste bloqué tant qu'il en
+   reste. C'est voulu : mieux vaut trois clics de plus qu'une fiche de paie envoyée à la mauvaise
+   personne.
+4. Envoyez. Chacune reçoit une notification et un email.
+
+### Vérifier côté collaboratrice
+
+1. Sur le téléphone, onglet **Documents** : le document apparaît, marqué **Nouveau**.
+2. **Ouvrir** télécharge le PDF. Le lien vaut soixante secondes — il ne sert qu'une fois.
+3. Espace direction → **Documents** : la ligne indique maintenant la date d'ouverture. Celles qui
+   n'ont rien ouvert sont signalées en orange.
+
+### Ce que personne ne peut faire
+
+Une collaboratrice ne voit que son propre coffre. Même en connaissant l'identifiant du document
+d'une collègue, il reste invisible — et le fichier, inatteignable.
+
+### Si le journal du workflow affiche un avertissement « bucket documents »
+
+Même manipulation que pour les selfies : `Storage` → **New bucket** → nom `documents`, laissez
+**Public** décoché → **Create**.
+
+---
+
 ## Ce qui se passe ensuite
 
 À chaque phase terminée, le déroulé est toujours le même :

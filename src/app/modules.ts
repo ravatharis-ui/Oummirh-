@@ -1,6 +1,7 @@
 import type { AppModule } from "@/core/modules";
 import { demoModule } from "@/modules/demo";
 import { congesModule } from "@/modules/conges";
+import { documentsModule } from "@/modules/documents";
 import { employeesModule } from "@/modules/employees";
 import { heuresModule } from "@/modules/heures";
 import { planningModule } from "@/modules/planning";
@@ -24,5 +25,6 @@ export const ALL_MODULES: readonly AppModule[] = [
   heuresModule,
   remplacementsModule,
   swapsModule,
+  documentsModule,
   demoModule,
 ];

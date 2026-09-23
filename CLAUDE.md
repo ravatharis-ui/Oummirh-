@@ -470,3 +470,35 @@ insufficient_privilege`.** Sur un projet hébergé, `storage.objects` n'appartie
     la suite pgTAP `0011`**, qui joue les trois sessions — demandeuse, collègue, direction — à la
     couche où vivent les règles. Playwright tourne ici sans base de données ; un vrai parcours à
     trois exigerait un projet de test et des sessions préparées, ce qui relève de la Phase 11.
+
+- **Demi-journées de congé sur le planning** (correction d'un écart signalé en Phase 6) :
+  - Le décompte savait compter 0,5 jour ; le planning affichait « Congé » sur la journée entière.
+    Le solde était juste et l'écran mentait — la direction ne voyait pas qu'il restait une
+    matinée à couvrir. `apply_planning_leave` **raccourcit** la journée de bord au lieu de la
+    remplacer, et le milieu de journée est pris sur `settings.default_schedule.break_start` :
+    le gérant le déplace depuis l'écran des paramètres, sans toucher au code.
+  - Une demi-journée ne se dessine que s'il y avait une journée de travail à raccourcir. Sinon
+    « Congé » reste la description la plus honnête.
+  - Sur une journée unique, `start_half` tranche : « je pars l'après-midi » veut dire qu'elle
+    travaille le matin.
+- **Phase 10** (coffre-fort numérique) :
+  - **Trois barrières, pas une.** Le critère d'acceptation — « même en devinant le chemin » —
+    demande mieux qu'une vérification applicative : RLS sur la table (deviner un identifiant ne
+    fait rien apparaître), politique de stockage sur le chemin (`<son id>/…`), et URL signée à
+    soixante secondes, demandée au clic et jamais stockée. Il n'existe aucun lien à recopier.
+  - **Le PDF ne passe pas par le serveur d'application.** Il va du navigateur de la direction
+    directement au bucket : dix mégaoctets n'ont rien à faire dans la mémoire d'une server action,
+    et la politique du bucket réserve déjà l'écriture à la direction. Seule la ligne passe par le
+    serveur, et `prepareDocumentPath` construit le chemin côté serveur — la fonction SQL le
+    revérifie ensuite.
+  - **Un envoi réussi dont l'enregistrement échoue est rattrapé** : le fichier est retiré, sinon
+    le stockage garderait un orphelin que plus rien ne référence — donc que plus rien ne pourrait
+    supprimer.
+  - **La reconnaissance par nom de fichier est délibérément timide.** Deux homonymes sans prénom,
+    un nom noyé dans un mot (« PAYETTE » n'est pas « PAYET »), un nom trop court : elle ne propose
+    rien et laisse associer à la main. Attribuer la fiche de paie de quelqu'un à une autre
+    personne est l'erreur la plus grave que ce module puisse commettre, et l'envoi reste bloqué
+    tant qu'un fichier n'est pas associé.
+  - **`first_viewed_at` est écrit par la base**, jamais par le navigateur : une collaboratrice ne
+    peut ni prétendre n'avoir rien vu, ni marquer ce qu'elle n'a pas ouvert. Et seule la première
+    ouverture est retenue — combien de fois elle relit son bulletin ne regarde personne.

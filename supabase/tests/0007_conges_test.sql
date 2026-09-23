@@ -7,7 +7,7 @@
 -- l'histoire.
 
 begin;
-select plan(41);
+select plan(48);
 
 -- ---------------------------------------------------------------- fixtures --
 insert into public.boutiques (id, code, name, kind, sort_order) values
@@ -345,6 +345,68 @@ select throws_ok(
 
 reset role;
 set local request.jwt.claims = '';
+
+-- ======================================== la demi-journée sur le planning ====
+-- Le solde savait compter 0,5 jour ; le planning affichait une absence entière.
+-- Ces quatre assertions verrouillent la correction.
+insert into public.planning_entries (employee_id, boutique_id, date, status,
+  start_time, end_time, source)
+values
+  ('dddddddd-0000-4000-8000-000000000301', 'bbbbbbbb-0000-4000-8000-000000000301',
+   '2027-03-15', 'work', '09:00', '17:30', 'manual'),
+  ('dddddddd-0000-4000-8000-000000000301', 'bbbbbbbb-0000-4000-8000-000000000301',
+   '2027-03-16', 'work', '09:00', '17:30', 'manual'),
+  ('dddddddd-0000-4000-8000-000000000301', 'bbbbbbbb-0000-4000-8000-000000000301',
+   '2027-03-17', 'work', '09:00', '17:30', 'manual');
+
+select is(
+  public.apply_planning_leave('dddddddd-0000-4000-8000-000000000301',
+    'aaaaaaaa-0000-4000-8000-000000000021', '2027-03-15', '2027-03-17', 'pm', 'am'),
+  3,
+  'Le congé est posé sur les trois journées'
+);
+
+select is(
+  (select status from public.planning_entries
+    where employee_id = 'dddddddd-0000-4000-8000-000000000301' and date = '2027-03-15'),
+  'work',
+  'Le premier jour reste une journée travaillée : elle part à midi'
+);
+
+select is(
+  (select end_time from public.planning_entries
+    where employee_id = 'dddddddd-0000-4000-8000-000000000301' and date = '2027-03-15'),
+  '12:30'::time,
+  'Et sa journée s''arrête à la pause'
+);
+
+select is(
+  (select status from public.planning_entries
+    where employee_id = 'dddddddd-0000-4000-8000-000000000301' and date = '2027-03-16'),
+  'leave',
+  'Le jour du milieu est un congé entier'
+);
+
+select is(
+  (select start_time from public.planning_entries
+    where employee_id = 'dddddddd-0000-4000-8000-000000000301' and date = '2027-03-17'),
+  '14:00'::time,
+  'Le dernier jour reprend à la fin de la pause : elle revient l''après-midi'
+);
+
+-- Et l'annulation rend les trois journées telles qu'elles étaient.
+select is(
+  public.clear_planning_from_event('leave', 'aaaaaaaa-0000-4000-8000-000000000021'),
+  3,
+  'L''annulation libère les trois journées'
+);
+
+select is(
+  (select end_time from public.planning_entries
+    where employee_id = 'dddddddd-0000-4000-8000-000000000301' and date = '2027-03-15'),
+  '17:30'::time,
+  'La première journée retrouve son horaire complet'
+);
 
 select * from finish();
 rollback;

@@ -100,6 +100,18 @@ test.describe("espaces protégés", () => {
     await page.goto("/admin/remplacements");
     await expect(page).toHaveURL(/\/admin\/connexion$/);
   });
+
+  // Le coffre-fort tient des fiches de paie : c'est la page la plus sensible de
+  // l'application, et elle doit se refermer avant tout rendu.
+  test("le coffre de la collaboratrice renvoie vers la connexion", async ({ page }) => {
+    await page.goto("/documents");
+    await expect(page).toHaveURL(/\/connexion$/);
+  });
+
+  test("les documents de la direction renvoient vers sa connexion", async ({ page }) => {
+    await page.goto("/admin/documents");
+    await expect(page).toHaveURL(/\/admin\/connexion$/);
+  });
 });
 
 test.describe("écran de connexion collaboratrice", () => {

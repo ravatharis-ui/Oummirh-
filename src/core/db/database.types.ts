@@ -182,6 +182,53 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          category: string
+          created_at: string
+          employee_id: string
+          first_viewed_at: string | null
+          id: string
+          period_month: string | null
+          size_bytes: number
+          storage_path: string
+          title: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          employee_id: string
+          first_viewed_at?: string | null
+          id?: string
+          period_month?: string | null
+          size_bytes: number
+          storage_path: string
+          title: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          employee_id?: string
+          first_viewed_at?: string | null
+          id?: string
+          period_month?: string | null
+          size_bytes?: number
+          storage_path?: string
+          title?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domain_events: {
         Row: {
           actor_id: string | null
@@ -1116,6 +1163,19 @@ export type Database = {
           start_date: string
         }[]
       }
+      admin_add_document: {
+        Args: {
+          p_category: string
+          p_employee_id: string
+          p_period_month?: string
+          p_size_bytes: number
+          p_storage_path: string
+          p_title: string
+        }
+        Returns: string
+      }
+      admin_remove_document: { Args: { p_document_id: string }; Returns: string }
+      mark_document_viewed: { Args: { p_document_id: string }; Returns: undefined }
       admin_remove_public_holiday: {
         Args: { p_date: string }
         Returns: boolean
@@ -1192,6 +1252,17 @@ export type Database = {
           p_source_ref: string
           p_start_time?: string
           p_status: string
+          p_to: string
+        }
+        Returns: number
+      }
+      apply_planning_leave: {
+        Args: {
+          p_employee_id: string
+          p_end_half?: string
+          p_from: string
+          p_request_id: string
+          p_start_half?: string
           p_to: string
         }
         Returns: number
