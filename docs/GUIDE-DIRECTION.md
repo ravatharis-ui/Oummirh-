@@ -75,3 +75,15 @@ d'absence.
   message rouge nomme la cause.
 - **Une collaboratrice ne reçoit pas ses emails.** Les notifications dans l'application, elles,
   arrivent toujours : l'email est un confort, la cloche fait foi.
+
+## La carte « Tâches automatiques »
+
+Sur votre tableau de bord, une carte liste les cinq choses qui se font sans que personne clique :
+les notifications, les alertes de retard, le calcul des heures, l'acquisition des congés et la
+purge des photos de pointage.
+
+Un voyant vert par ligne : il n'y a rien à faire. Un voyant rouge : la carte dit laquelle, depuis
+quand, et ce qu'on est en train de perdre. **Prévenez-moi**, c'est un défaut à corriger.
+
+« Jamais lancée » n'est pas une panne : c'est ce qu'affiche une tâche de nuit tant que la première
+nuit après une mise en ligne n'est pas passée.

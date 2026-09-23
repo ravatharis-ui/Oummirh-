@@ -565,3 +565,29 @@ template` savait appliquer une semaine type que rien ne savait créer. La fermet
     navigateur demanderait un projet de test et des sessions préparées ; écrire un test qui ne
     peut pas s'exécuter contredirait la règle que ce projet s'est donnée après deux incidents —
     un fichier de test jamais exécuté est un fichier de test faux.
+
+- **Santé des tâches planifiées** (après l'audit d'avant mise en production) :
+  - **Cinq tâches tournent sans que personne clique, et rien ne disait qu'une s'était arrêtée.**
+    On l'aurait découvert en mars, en constatant que personne n'acquiert de congés depuis
+    janvier ; ou en trouvant une photo de décembre que la page de confidentialité promettait
+    effacée. `job_runs` porte le dernier passage de chaque tâche, et le tableau de bord le lit.
+  - **Une ligne par tâche, jamais un journal.** Le distributeur d'événements passe toutes les
+    minutes : garder son histoire ferait cinquante mille lignes par mois pour répondre à une
+    question qui ne porte que sur le dernier passage. `last_ok_at` est tenu à part de
+    `last_run_at` exprès — un échec ne doit pas effacer la trace du dernier succès, qui est ce
+    qui dit **depuis quand** ça dure.
+  - **L'enregistrement est dans l'enveloppe, pas dans chaque route.** `scheduledRoute()` porte
+    l'authentification, l'exécution et l'enregistrement. Une tâche dont l'auteur oublierait de
+    signaler son passage s'afficherait comme en panne, et un écran de santé qui crie au loup est
+    pire que pas d'écran de santé : ici, c'est impossible à oublier. Au passage, les cinq routes
+    cron ne dupliquent plus la comparaison de secret en temps constant.
+  - **Un appel non autorisé n'enregistre rien.** Quelqu'un qui frappe à la porte n'est pas un
+    passage, et le compter en échec laisserait n'importe qui peindre le voyant en rouge.
+  - **`jamais lancée` n'est pas `en panne`.** Sur une installation neuve c'est normal pendant
+    quelques heures, et un voyant rouge injustifié apprend à ne plus regarder les voyants. De
+    même, les tâches de nuit tolèrent **36 heures** : une nuit sautée est rattrapée par la
+    suivante — c'est écrit ainsi —, deux ne le sont pas.
+  - **Le simulateur pgTAP hors ligne a gagné `isnt`**, avec exactement la sémantique de pgTAP
+    (`is distinct from`, donc deux `null` sont égaux et l'assertion échoue). Écrire l'assertion
+    avec `ok(... is not null)` aurait été plus court et aurait laissé le banc d'essai en retard
+    sur le projet réel — la leçon de `storage.protect_delete`.

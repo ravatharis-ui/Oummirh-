@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { JobHealthCard } from "@/core/ui/jobs/job-health-card";
+
 import { getRegistry } from "../../registry";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
@@ -13,6 +15,7 @@ export default async function AdminDashboardPage() {
       <h1 className="text-2xl font-semibold">Tableau de bord</h1>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <JobHealthCard />
         {widgets.map((Widget, index) => (
           <Widget key={index} />
         ))}

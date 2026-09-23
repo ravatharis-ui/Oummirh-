@@ -27,6 +27,20 @@ begin
   return 'ok - ' || $3;
 end $$;
 
+-- `isnt` suit exactement la sémantique de pgTAP : `is distinct from`, donc deux
+-- null sont « égaux » et l'assertion échoue. Une émulation qui divergerait ici
+-- ferait passer hors ligne un test que le projet réel refuserait — la leçon de
+-- storage.protect_delete.
+create or replace function public.isnt(anyelement, anyelement, text) returns text
+language plpgsql as $$
+begin
+  perform public.bump();
+  if $1 is not distinct from $2 then
+    raise exception 'ECHEC [%] : les deux valent %', $3, $1;
+  end if;
+  return 'ok - ' || $3;
+end $$;
+
 create or replace function public.ok(boolean, text) returns text
 language plpgsql as $$
 begin

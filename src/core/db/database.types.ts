@@ -399,6 +399,36 @@ export type Database = {
           },
         ]
       }
+      job_runs: {
+        Row: {
+          consecutive_failures: number
+          error: string | null
+          job: string
+          last_ok_at: string | null
+          last_run_at: string
+          ok: boolean
+          summary: Json
+        }
+        Insert: {
+          consecutive_failures?: number
+          error?: string | null
+          job: string
+          last_ok_at?: string | null
+          last_run_at: string
+          ok: boolean
+          summary?: Json
+        }
+        Update: {
+          consecutive_failures?: number
+          error?: string | null
+          job?: string
+          last_ok_at?: string | null
+          last_run_at?: string
+          ok?: boolean
+          summary?: Json
+        }
+        Relationships: []
+      }
       leave_ledger: {
         Row: {
           created_at: string
@@ -1474,6 +1504,10 @@ export type Database = {
       }
       planning_protected_sources: { Args: never; Returns: string[] }
       pointage_run_checks: { Args: { p_at?: string }; Returns: Json }
+      record_job_run: {
+        Args: { p_error?: string; p_job: string; p_ok: boolean; p_summary?: Json }
+        Returns: undefined
+      }
       request_leave: {
         Args: {
           p_end_date: string
