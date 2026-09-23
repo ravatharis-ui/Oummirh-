@@ -8,6 +8,7 @@ import { formatDuration, formatFrDate, formatFrDateShort } from "@/core/time";
 import { Badge } from "@/core/ui/badge";
 import { Button } from "@/core/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/core/ui/card";
+import { CounterCard } from "@/core/ui/counter-card";
 import { Label } from "@/core/ui/label";
 import { Modal } from "@/core/ui/modal";
 import { Select } from "@/core/ui/select";
@@ -24,6 +25,7 @@ import {
   RECOVERY_STATUS_LABELS,
   type RecoveryMode,
 } from "../../domain/recovery";
+import { hoursCounters } from "../../domain/counters";
 import { requestRecovery } from "../../server/actions";
 import { HoursDetailList } from "../hours-detail-list";
 import type { MyHoursState } from "../../types";
@@ -45,12 +47,27 @@ const STATUS_VARIANT = {
 export function MyHours({ state }: { state: MyHoursState }) {
   const [open, setOpen] = useState(false);
   const tone = balanceTone(state.balanceMinutes);
+  const counters = hoursCounters(state.movements, state.balanceMinutes);
 
   return (
     <div className="flex flex-col gap-4">
+      <CounterCard
+        title="Heures supplémentaires"
+        period="Depuis le début"
+        figures={[
+          { label: "Heures faites", value: formatBalance(counters.earned) },
+          {
+            label: "Heures disponibles",
+            value: formatBalance(counters.available),
+            tone: counters.available < 0 ? "negative" : "neutral",
+          },
+          { label: "Heures reprises", value: formatDuration(counters.used) },
+        ]}
+      />
+
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Mon solde d&apos;heures</CardTitle>
+          <CardTitle className="text-base">Prendre mes heures</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <p className={cn("text-4xl font-semibold tabular-nums", BALANCE_TONE_CLASS[tone])}>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { hoursCounters } from "../domain/counters";
 import { buildHoursDetail, detailTotal, hoursKindLabel } from "../domain/detail";
 
 import { cumulativeMinutes, monthlyTotals, toCsv, type HoursMovement } from "../domain/monthly";
@@ -220,5 +221,40 @@ describe("le détail du compteur", () => {
     expect(hoursKindLabel("adjustment")).toBe("Ajustement de la direction");
     // Une nature ajoutée plus tard ne casse pas l'écran.
     expect(hoursKindLabel("quelque_chose")).toBe("Mouvement");
+  });
+});
+
+describe("les trois chiffres du compteur d'heures", () => {
+  it("sépare ce qui a été fait, ce qui reste et ce qui a été repris", () => {
+    const counters = hoursCounters(
+      [
+        { kind: "daily_delta", minutes: 90, localDate: "2026-03-02" },
+        { kind: "daily_delta", minutes: -30, localDate: "2026-03-03" },
+        { kind: "adjustment", minutes: 15, localDate: "2026-03-04" },
+        { kind: "recovery", minutes: -60, localDate: "2026-03-05" },
+      ],
+      15,
+    );
+
+    // 90 − 30 + 15 : les journées et les ajustements de la direction.
+    expect(counters.earned).toBe(75);
+    // Repris en positif : « heures reprises : −60 » ne veut rien dire.
+    expect(counters.used).toBe(60);
+    expect(counters.available).toBe(15);
+  });
+
+  it("un compteur vide affiche trois zéros, pas trois tirets", () => {
+    const counters = hoursCounters([], 0);
+    expect(counters).toEqual({ earned: 0, available: 0, used: 0 });
+  });
+
+  it("le solde vient de la base, jamais d'une soustraction", () => {
+    // La liste affichée est bornée ; recalculer le solde depuis elle le
+    // tronquerait, et un compteur faux vaut moins que pas de compteur.
+    const counters = hoursCounters(
+      [{ kind: "daily_delta", minutes: 30, localDate: "2026-03-02" }],
+      999,
+    );
+    expect(counters.available).toBe(999);
   });
 });

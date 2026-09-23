@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/core/ui/card";
+import { CounterCard } from "@/core/ui/counter-card";
 import {
   formatLeaveDays,
   getMyLeaveState,
+  leaveCounters,
   LeaveForm,
   MyLeave,
   periodLabel,
@@ -14,22 +15,25 @@ export const dynamic = "force-dynamic";
 
 export default async function CollabLeavePage() {
   const state = await getMyLeaveState();
+  const counters = leaveCounters(state.movements, state.periodStart, state.balance);
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4">
       <h1 className="text-2xl font-semibold">Mes congés</h1>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Mon solde</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-semibold">{formatLeaveDays(state.balance)}</p>
-          <p className="text-muted-foreground mt-1 text-base">
-            Période {periodLabel(state.periodStart)}
-          </p>
-        </CardContent>
-      </Card>
+      <CounterCard
+        title="Congés payés"
+        period={periodLabel(state.periodStart)}
+        figures={[
+          { label: "Jours acquis", value: formatLeaveDays(counters.earned) },
+          {
+            label: "Jours disponibles",
+            value: formatLeaveDays(counters.available),
+            tone: counters.available < 0 ? "negative" : "neutral",
+          },
+          { label: "Jours pris", value: formatLeaveDays(counters.used) },
+        ]}
+      />
 
       <LeaveForm
         balance={state.balance}

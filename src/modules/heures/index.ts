@@ -23,6 +23,8 @@ export {
   type RecoveryStatus,
 } from "./domain/recovery";
 
+export { hoursCounters, type HoursCounters } from "./domain/counters";
+
 export {
   buildHoursDetail,
   detailTotal,

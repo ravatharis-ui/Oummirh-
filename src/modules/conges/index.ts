@@ -6,6 +6,8 @@
  */
 export { congesModule } from "./manifest";
 
+export { leaveCounters, type LeaveCounters } from "./domain/counters";
+
 export {
   countLeaveDays,
   formatLeaveDays,

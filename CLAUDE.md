@@ -666,3 +666,21 @@ template` savait appliquer une semaine type que rien ne savait créer. La fermet
   - **Le message dit ce qu'on perd**, pas « erreur technique » : « Crédite les jours acquis chaque
     mois… Sans elle, les soldes ne montent plus. » Le gérant doit pouvoir décider s'il appelle
     tout de suite ou lundi sans savoir ce qu'est une tâche planifiée.
+
+- **Compteurs en trois chiffres** (le propriétaire a montré l'écran « Absences » d'une autre
+  application : acquis / disponible / utilisé côte à côte) :
+  - **Les trois ne se déduisent pas l'un de l'autre, et c'est la raison d'être de l'écran.**
+    `disponible` n'est pas `acquis − utilisé` : un report de la période précédente entre dans le
+    solde sans avoir été acquis cette année. Les afficher séparément évite la question
+    « pourquoi ça ne tombe pas juste ? », qui finit toujours par arriver.
+  - **`available` vient toujours de la base, jamais d'une somme des mouvements affichés.** La
+    liste est bornée par la requête ; la recalculer depuis elle donnerait un solde tronqué, et un
+    compteur faux vaut moins que pas de compteur.
+  - **Les jours pris et les heures reprises s'affichent en positif.** Le registre les écrit en
+    négatif — c'est sa nature —, mais « jours pris : −3 » ne veut rien dire pour la personne qui
+    lit.
+  - **Une expiration n'est ni acquise ni prise.** Des jours perdus au changement de période
+    laisseraient croire, comptés en « utilisés », qu'elle en a profité.
+  - **`CounterCard` est dans `core/ui` et ne sait rien du métier** : ni ce qu'est un congé, ni ce
+    qu'est une heure. Chaque module formate ses propres valeurs et passe des chaînes. C'est ce qui
+    permet aux deux compteurs d'avoir la même forme sans qu'un module dépende de l'autre.

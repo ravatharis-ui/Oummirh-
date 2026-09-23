@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { leaveCounters } from "../domain/counters";
+import type { LeaveMovement } from "../types";
+
 import { countLeaveDays, formatLeaveDays } from "../domain/count";
 import { DEFAULT_LEAVE_RULES, monthlyAccrual, periodLabel, periodStart } from "../domain/period";
 
@@ -146,5 +149,68 @@ describe("formatLeaveDays", () => {
     expect(formatLeaveDays(3)).toBe("3 jours");
     expect(formatLeaveDays(2.5)).toBe("2,5 jours");
     expect(formatLeaveDays(0.5)).toBe("0,5 jour");
+  });
+});
+
+describe("les trois chiffres du compteur de congés", () => {
+  const PERIOD = "2026-06-01";
+
+  function movement(kind: string, days: number, occurredOn: string): LeaveMovement {
+    return { id: `${kind}-${occurredOn}`, kind, days, occurredOn, note: null };
+  }
+
+  it("sépare ce qui est acquis, ce qui reste et ce qui est pris", () => {
+    const counters = leaveCounters(
+      [
+        movement("accrual", 2.5, "2026-06-30"),
+        movement("accrual", 2.5, "2026-07-31"),
+        movement("taken", -3, "2026-07-15"),
+      ],
+      PERIOD,
+      12,
+    );
+
+    expect(counters.earned).toBe(5);
+    expect(counters.used).toBe(3);
+    // Le solde vient de la base, pas d'une soustraction : il porte le report.
+    expect(counters.available).toBe(12);
+  });
+
+  it("les jours pris s'affichent en positif", () => {
+    // Le registre les écrit en négatif ; « jours pris : −3 » ne veut rien dire.
+    const counters = leaveCounters([movement("taken", -3, "2026-07-15")], PERIOD, 0);
+    expect(counters.used).toBe(3);
+  });
+
+  it("le report entrant compte comme acquis", () => {
+    const counters = leaveCounters([movement("carry_over", 4, "2026-06-01")], PERIOD, 4);
+    expect(counters.earned).toBe(4);
+  });
+
+  it("la période précédente ne pollue pas celle qu'on regarde", () => {
+    const counters = leaveCounters(
+      [
+        movement("accrual", 2.5, "2026-05-31"), // période d'avant
+        movement("accrual", 2.5, "2026-06-30"), // celle-ci
+        movement("accrual", 2.5, "2027-06-30"), // celle d'après
+      ],
+      PERIOD,
+      7.5,
+    );
+
+    expect(counters.earned).toBe(2.5);
+  });
+
+  it("une expiration n'est ni acquise ni prise", () => {
+    // Des jours perdus au changement de période ne sont pas des jours utilisés :
+    // les compter ainsi laisserait croire qu'elle en a profité.
+    const counters = leaveCounters(
+      [movement("accrual", 2.5, "2026-06-30"), movement("expiry", -5, "2026-06-01")],
+      PERIOD,
+      0,
+    );
+
+    expect(counters.earned).toBe(2.5);
+    expect(counters.used).toBe(0);
   });
 });
