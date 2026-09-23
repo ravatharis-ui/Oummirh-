@@ -780,6 +780,27 @@ export type Database = {
           },
         ]
       }
+      settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       shift_swaps: {
         Row: {
           admin_comment: string | null
@@ -842,27 +863,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      settings: {
-        Row: {
-          key: string
-          updated_at: string
-          updated_by: string | null
-          value: Json
-        }
-        Insert: {
-          key: string
-          updated_at?: string
-          updated_by?: string | null
-          value: Json
-        }
-        Update: {
-          key?: string
-          updated_at?: string
-          updated_by?: string | null
-          value?: Json
-        }
-        Relationships: []
       }
       time_clocks: {
         Row: {
@@ -1038,6 +1038,7 @@ export type Database = {
         }
         Returns: number
       }
+      admin_cancel_replacement: { Args: { p_id: string }; Returns: undefined }
       admin_correct_time_clock: {
         Args: {
           p_employee_id: string
@@ -1069,12 +1070,29 @@ export type Database = {
         }
         Returns: string
       }
+      admin_create_replacement: {
+        Args: {
+          p_boutique_id: string
+          p_break_end?: string
+          p_break_start?: string
+          p_date: string
+          p_employee_id: string
+          p_end_time: string
+          p_note?: string
+          p_start_time: string
+        }
+        Returns: string
+      }
       admin_decide_leave: {
         Args: { p_approve: boolean; p_comment?: string; p_request_id: string }
         Returns: undefined
       }
       admin_decide_recovery: {
         Args: { p_approve: boolean; p_comment?: string; p_request_id: string }
+        Returns: undefined
+      }
+      admin_decide_swap: {
+        Args: { p_approve: boolean; p_comment?: string; p_swap_id: string }
         Returns: undefined
       }
       admin_delete_planning_entry: {
@@ -1101,6 +1119,19 @@ export type Database = {
       admin_remove_public_holiday: {
         Args: { p_date: string }
         Returns: boolean
+      }
+      admin_replacement_candidates: {
+        Args: { p_boutique_id?: string; p_date: string }
+        Returns: {
+          availability: string
+          display_name: string
+          employee_id: string
+          home_boutique: string
+          planned_end: string
+          planned_shop: string
+          planned_start: string
+          planned_status: string
+        }[]
       }
       admin_set_boutique_active: {
         Args: { p_active: boolean; p_id: string }
@@ -1132,61 +1163,6 @@ export type Database = {
           p_is_apprenticeship?: boolean
           p_label: string
           p_sort_order?: number
-        }
-        Returns: string
-      }
-      admin_cancel_replacement: { Args: { p_id: string }; Returns: undefined }
-      admin_create_replacement: {
-        Args: {
-          p_boutique_id: string
-          p_break_end?: string
-          p_break_start?: string
-          p_date: string
-          p_employee_id: string
-          p_end_time: string
-          p_note?: string
-          p_start_time: string
-        }
-        Returns: string
-      }
-      admin_decide_swap: {
-        Args: { p_approve: boolean; p_comment?: string; p_swap_id: string }
-        Returns: undefined
-      }
-      admin_replacement_candidates: {
-        Args: { p_boutique_id?: string; p_date: string }
-        Returns: {
-          availability: string
-          display_name: string
-          employee_id: string
-          home_boutique: string
-          planned_end: string
-          planned_shop: string
-          planned_start: string
-          planned_status: string
-        }[]
-      }
-      apply_planning_swap: {
-        Args: {
-          p_partner_date: string
-          p_partner_id: string
-          p_requester_date: string
-          p_requester_id: string
-          p_swap_id: string
-        }
-        Returns: boolean
-      }
-      cancel_swap: { Args: { p_swap_id: string }; Returns: undefined }
-      partner_decide_swap: {
-        Args: { p_accept: boolean; p_swap_id: string }
-        Returns: undefined
-      }
-      request_swap: {
-        Args: {
-          p_message?: string
-          p_partner_date: string
-          p_partner_id: string
-          p_requester_date: string
         }
         Returns: string
       }
@@ -1230,10 +1206,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      apply_planning_swap: {
+        Args: {
+          p_partner_date: string
+          p_partner_id: string
+          p_requester_date: string
+          p_requester_id: string
+          p_swap_id: string
+        }
+        Returns: boolean
+      }
       cancel_leave_request: {
         Args: { p_request_id: string }
         Returns: undefined
       }
+      cancel_swap: { Args: { p_swap_id: string }; Returns: undefined }
       claim_domain_events: {
         Args: { p_limit?: number; p_max_attempts?: number }
         Returns: {
@@ -1297,6 +1284,10 @@ export type Database = {
       emit_event: {
         Args: { p_actor_id?: string; p_payload?: Json; p_type: string }
         Returns: string
+      }
+      free_swapped_day: {
+        Args: { p_date: string; p_employee_id: string; p_swap_id: string }
+        Returns: undefined
       }
       has_role: {
         Args: { p_boutique_id?: string; p_role: string }
@@ -1364,6 +1355,19 @@ export type Database = {
         }
         Returns: string
       }
+      partner_decide_swap: {
+        Args: { p_accept: boolean; p_swap_id: string }
+        Returns: undefined
+      }
+      place_swapped_day: {
+        Args: {
+          p_date: string
+          p_employee_id: string
+          p_entry: Database["public"]["Tables"]["planning_entries"]["Row"]
+          p_swap_id: string
+        }
+        Returns: undefined
+      }
       planning_announce: {
         Args: { p_dates: string[]; p_employee_id: string }
         Returns: undefined
@@ -1383,6 +1387,15 @@ export type Database = {
       }
       request_recovery: {
         Args: { p_date: string; p_minutes: number; p_mode: string }
+        Returns: string
+      }
+      request_swap: {
+        Args: {
+          p_message?: string
+          p_partner_date: string
+          p_partner_id: string
+          p_requester_date: string
+        }
         Returns: string
       }
       reset_employee_pin: {
