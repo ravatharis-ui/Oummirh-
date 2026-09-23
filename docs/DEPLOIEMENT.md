@@ -452,7 +452,23 @@ Actions` : `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKE
       depuis n'importe quel générateur de mot de passe, 32 caractères.
 - [ ] **Le webhook Supabase** vers `/api/events/dispatch`, avec l'en-tête
       `Authorization: Bearer <EVENTS_DISPATCH_SECRET>` (étape 7).
-- [ ] **Les tâches planifiées** apparaissent dans Vercel, onglet **Cron Jobs**. Il y en a cinq.
+- [ ] **Les tâches planifiées** apparaissent dans Vercel, **Settings → Cron Jobs**. Il y en a
+      cinq. Attention à ne pas confondre avec **Observability → Cron Jobs**, qui ne montre que ce
+      qui s'est **exécuté** : trois des cinq ne tournent qu'une fois par nuit, donc elles y sont
+      absentes tant que la nuit suivant le premier déploiement n'est pas passée. C'est la page
+      Settings qui dit ce qui est configuré.
+
+      | Route                 | Heure UTC | Heure à La Réunion | Ce qu'elle fait                         |
+      | --------------------- | --------- | ------------------ | --------------------------------------- |
+      | `/api/events/dispatch`| chaque minute | —              | Traite les événements : c'est la pièce vitale. |
+      | `/api/cron/pointage`  | toutes les 10 min | —          | Alerte la direction sur les retards.    |
+      | `/api/cron/heures`    | 19:30     | 23 h 30            | Filet du calcul des heures.             |
+      | `/api/cron/conges`    | 20:30     | 00 h 30            | Acquisition mensuelle, report, expiration. |
+      | `/api/cron/selfies`   | 21:30     | 01 h 30            | Purge des photos au-delà de la rétention. |
+
+      Les trois tâches de nuit sont écrites pour tourner tous les jours sans rien fausser : une
+      nuit sautée est rattrapée par la suivante.
+
 - [ ] **Les deux espaces de stockage existent et sont privés.** Supabase → **Storage** : il doit
       y avoir `selfies` et `documents`, tous les deux marqués privés. Les migrations les créent,
       mais sur un projet hébergé elles n'en ont pas toujours le droit — dans ce cas elles laissent
