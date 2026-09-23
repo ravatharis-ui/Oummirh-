@@ -52,6 +52,14 @@ export interface AppModule {
   key: string;
   /** Human name (French), e.g. `Congés`. */
   name: string;
+  /**
+   * One sentence, in French, for someone who did not write the code. Shown on
+   * the settings screen next to the on/off switch: a manager about to turn a
+   * module off deserves to know what it does.
+   */
+  description?: string;
+  /** A module the application cannot run without is never offered for switching off. */
+  required?: boolean;
   /** Static default; the registry also honours `settings.modules_enabled`. */
   enabled: boolean;
   nav: { collab?: NavItem[]; admin?: NavItem[] };

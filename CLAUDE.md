@@ -395,3 +395,42 @@ insufficient_privilege`.** Sur un projet hébergé, `storage.objects` n'appartie
   - **L'export CSV est en point-virgule, décimales à la virgule, avec un BOM.** C'est ce qu'Excel
     en français attend : un fichier qui s'ouvre en une seule colonne, ou qui affiche « AurÃ©lie »,
     n'est pas un export.
+
+- **Paramétrage par la direction** (intercalé après la Phase 7, à la demande du propriétaire :
+  « tant que ça reste modifiable depuis l'espace admin ») :
+  - **Les quatre tables de référence ne sont plus écrites depuis le navigateur.** `settings`,
+    `boutiques`, `contract_types` et `public_holidays` avaient une politique RLS qui autorisait
+    la direction à écrire en direct. La politique reste — elle documente l'intention — mais le
+    `grant` est retiré : PostgreSQL refuse désormais la requête avant même de la regarder. Tout
+    passe par des fonctions `security definer` qui journalisent l'avant et l'après. Sans ça,
+    personne ne saurait six mois plus tard qui a changé la règle d'acquisition, ni quelle était
+    la valeur précédente.
+  - **Le registre des réglages** (`src/core/settings/registry.ts`) est la pièce qui rend l'écran
+    durable. Chaque réglage y est décrit une fois — libellé, aide, groupe, forme du champ,
+    conséquence du changement — et `/admin/parametres` se construit à partir de cette liste.
+    Ajouter un réglage plus tard = **une entrée + une migration** qui pose sa valeur par défaut.
+    Aucune page à retoucher, aucun composant à écrire.
+  - **`admin_set_setting` refuse une clé qui n'existe pas déjà.** Créer un réglage est une
+    décision de code — il faut bien que quelque chose le lise — donc une migration. La fonction
+    ne sert qu'à changer une valeur, et une faute de frappe ne peut pas créer un réglage fantôme
+    que plus rien ne lit.
+  - **Chaque réglage s'enregistre seul**, pas à travers un bouton « Tout enregistrer ». Plus de
+    clics, beaucoup moins d'accidents : on change la tolérance de retard sans toucher, sans le
+    vouloir, à la durée de conservation des photos.
+  - **Le mode de congés porte son nombre de jours.** Le formulaire ne propose pas les deux
+    séparément : `ouvrables` impose 2,5 j/mois, `ouvres` impose 2,08. Laisser quelqu'un saisir
+    « ouvrés, 2,5 j/mois » serait lui laisser recréer l'incohérence de la V1.
+  - **Un point de vente ne se supprime pas, il se ferme.** Des plannings et des pointages le
+    référencent. La fermeture est refusée tant que des collaboratrices actives y sont rattachées,
+    et le dernier point de vente actif ne peut pas être fermé.
+  - **Les jours fériés se tiennent à jour depuis l'écran.** Pâques et l'Ascension bougent chaque
+    année ; sans ça, il faudrait un développeur chaque mois de janvier pour que le décompte des
+    congés tombe juste. Retirer un férié change les congés **à venir** ; un congé déjà validé
+    garde le décompte arrêté le jour de la décision, parce que sa ligne de ledger est écrite.
+  - **`AppModule` gagne `description` et `required`.** Un gérant sur le point d'éteindre un module
+    a le droit de savoir ce qu'il fait ; et un module dont l'application ne peut pas se passer
+    n'est pas proposé à l'extinction. Éteindre conserve les données : elles reviennent intactes.
+  - **Un test Vitest fait l'aller-retour formulaire pour chaque réglage du registre.** La valeur
+    par défaut part vers le formulaire, revient, et doit être acceptée — ce qui garantit qu'un
+    gérant peut rouvrir un écran et réenregistrer sans rien casser. Un réglage ajouté plus tard
+    sans traduction correcte fera échouer ce test avant d'atteindre l'écran.

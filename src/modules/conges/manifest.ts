@@ -40,6 +40,8 @@ export const congesModule: AppModule = {
   key: "conges",
   name: "Congés",
   enabled: true,
+  description:
+    "Les demandes de congés, le décompte et les soldes. L'acquisition mensuelle continue même module éteint.",
   nav: {
     collab: [{ label: "Congés", href: "/conges", icon: Palmtree, roles: ["employee"] }],
     admin: [{ label: "Congés", href: "/admin/conges", icon: Palmtree, roles: ["admin"] }],

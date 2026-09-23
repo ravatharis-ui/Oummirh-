@@ -9,7 +9,7 @@
 -- durablement, même sur un projet hébergé.
 
 begin;
-select plan(27);
+select plan(29);
 
 -- ---------------------------------------------------------------- fixtures --
 insert into auth.users (id, email) values
@@ -170,9 +170,24 @@ select cmp_ok((select count(*) from public.login_attempts), '>=', 1::bigint,
 select is((select count(*) from public.domain_events where type = 'test.rls'), 1::bigint,
           'La direction voit les événements internes');
 
-select lives_ok(
+-- Les données de référence ne s'écrivent plus en direct, direction comprise :
+-- sans trace dans le journal d'audit, personne ne saurait plus tard qui a fermé
+-- un point de vente ni quand. La RLS l'autoriserait encore ; le `grant`, non.
+select throws_ok(
   $$insert into public.boutiques (code, name, kind) values ('TEST_RLS', 'Boutique de test', 'physical')$$,
-  'La direction peut créer un point de vente'
+  '42501', null,
+  'Même la direction ne crée pas un point de vente en écrivant dans la table'
+);
+
+select lives_ok(
+  $$select public.admin_upsert_boutique('TEST_RLS', 'Boutique de test', 'physical')$$,
+  'La direction crée un point de vente par la fonction prévue pour'
+);
+
+select is(
+  (select count(*) from public.audit_log where action = 'boutique.created'),
+  1::bigint,
+  'Et la création est journalisée'
 );
 
 reset role;

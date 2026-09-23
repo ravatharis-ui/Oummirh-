@@ -21,6 +21,8 @@ export const demoModule: AppModule = {
   key: "demo",
   name: "Démo",
   enabled: true,
+  description:
+    "Écran de vérification technique. Il sert à éprouver les notifications ; vous pouvez l'éteindre.",
   nav: {
     collab: [{ label: "Démo", href: "/demo", icon: Sparkles, roles: ["employee"] }],
     admin: [{ label: "Démo", href: "/admin/demo", icon: Sparkles, roles: ["admin"] }],

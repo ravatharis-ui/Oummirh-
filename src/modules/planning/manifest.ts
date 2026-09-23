@@ -15,6 +15,8 @@ export const planningModule: AppModule = {
   key: "planning",
   name: "Planning",
   enabled: true,
+  description:
+    "Les plannings hebdomadaires, la semaine type et la version imprimable. Les congés, remplacements et récupérations viennent s'y poser.",
   nav: {
     collab: [{ label: "Planning", href: "/planning", icon: CalendarDays, roles: ["employee"] }],
     admin: [{ label: "Planning", href: "/admin/planning", icon: CalendarDays, roles: ["admin"] }],

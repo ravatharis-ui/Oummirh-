@@ -27,6 +27,8 @@ export const pointageModule: AppModule = {
   key: "pointage",
   name: "Pointage",
   enabled: true,
+  description:
+    "La pointeuse : arrivée, pause, départ, avec selfie à l'arrivée. C'est elle qui alimente le suivi des heures.",
   nav: {
     collab: [{ label: "Pointer", href: "/pointer", icon: Clock, roles: ["employee"] }],
     admin: [{ label: "Pointage", href: "/admin/pointage", icon: Clock, roles: ["admin"] }],

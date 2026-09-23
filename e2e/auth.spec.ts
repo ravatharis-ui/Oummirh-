@@ -78,6 +78,13 @@ test.describe("espaces protégés", () => {
     await page.goto("/admin/heures");
     await expect(page).toHaveURL(/\/admin\/connexion$/);
   });
+
+  // L'écran de paramétrage change les règles de toute l'application : c'est la
+  // dernière page qu'on voudrait voir s'ouvrir sans session.
+  test("les paramètres renvoient vers la connexion direction", async ({ page }) => {
+    await page.goto("/admin/parametres");
+    await expect(page).toHaveURL(/\/admin\/connexion$/);
+  });
 });
 
 test.describe("écran de connexion collaboratrice", () => {

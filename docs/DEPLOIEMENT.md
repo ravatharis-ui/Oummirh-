@@ -332,6 +332,43 @@ quotidiennes en une seule.
 
 ---
 
+## Étape 10 — Régler l'application vous-même
+
+Espace direction → **Paramètres**. Tout ce qui s'y trouve se change sans développeur, et chaque
+modification est enregistrée avec sa valeur d'avant.
+
+| Ce que vous pouvez régler  | Effet                                                            |
+| -------------------------- | ---------------------------------------------------------------- |
+| Nom de l'entreprise        | En tête des emails et des plannings imprimés.                    |
+| Horaires par défaut        | Proposés à la création d'une fiche ou d'une journée de planning. |
+| Règle d'acquisition        | 30 jours/an (ouvrables) ou 25 jours/an (ouvrés).                 |
+| Tolérance de retard        | En dessous, l'arrivée est « à l'heure » et n'alerte personne.    |
+| Fenêtre des alertes        | Les alertes ne partent qu'entre ces deux heures.                 |
+| Délai de départ non pointé | Temps avant que la direction soit prévenue.                      |
+| Selfie à l'arrivée         | Demandé ou non.                                                  |
+| Conservation des selfies   | Au-delà, les photos sont supprimées chaque nuit.                 |
+| Pas des récupérations      | Les tranches proposées pour « Prendre mes heures supp ».         |
+| Points de vente            | Ajouter, renommer, fermer, rouvrir.                              |
+| Types de contrat           | Allonger la liste proposée à la création d'une collaboratrice.   |
+| Jours fériés               | Ajouter les dates de l'année suivante.                           |
+| Modules                    | Allumer ou éteindre une partie de l'application.                 |
+
+### Trois choses à savoir
+
+**Fermer n'est pas supprimer.** Un point de vente fermé garde tout son historique et peut être
+rouvert. L'application refuse de le fermer s'il reste des collaboratrices rattachées : rattachez-les
+ailleurs d'abord.
+
+**Éteindre un module ne perd rien.** Il disparaît des menus, ses données restent, et tout revient
+tel quel si vous le rallumez.
+
+**Les jours fériés se tiennent à jour ici.** Pâques et l'Ascension changent de date chaque année.
+Deux années sont déjà enregistrées ; pensez à ajouter la suivante, sinon ces journées seront
+décomptées des congés comme des jours ordinaires. L'écran vous prévient s'il n'en reste aucun à
+venir.
+
+---
+
 ## Ce qui se passe ensuite
 
 À chaque phase terminée, le déroulé est toujours le même :

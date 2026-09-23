@@ -931,6 +931,37 @@ export type Database = {
           start_date: string
         }[]
       }
+      admin_remove_public_holiday: { Args: { p_date: string }; Returns: boolean }
+      admin_set_boutique_active: {
+        Args: { p_active: boolean; p_id: string }
+        Returns: undefined
+      }
+      admin_set_public_holiday: {
+        Args: { p_date: string; p_label: string }
+        Returns: undefined
+      }
+      admin_set_setting: { Args: { p_key: string; p_value: Json }; Returns: undefined }
+      admin_upsert_boutique: {
+        Args: {
+          p_address?: string
+          p_code: string
+          p_id?: string
+          p_kind?: string
+          p_name: string
+          p_sort_order?: number
+        }
+        Returns: string
+      }
+      admin_upsert_contract_type: {
+        Args: {
+          p_code: string
+          p_id?: string
+          p_is_apprenticeship?: boolean
+          p_label: string
+          p_sort_order?: number
+        }
+        Returns: string
+      }
       admin_upsert_planning_entry: {
         Args: {
           p_boutique_id?: string

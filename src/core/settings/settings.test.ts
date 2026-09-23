@@ -6,6 +6,13 @@ import {
   parseSettingsRows,
   type SettingRow,
 } from "./schemas";
+import {
+  fromFormFields,
+  SETTING_DEFINITIONS,
+  SETTING_GROUPS,
+  toFormFields,
+  unknownDefinitionKeys,
+} from "./registry";
 
 const validRows: SettingRow[] = [
   { key: "company_name", value: "Oummi Dressing" },
@@ -86,5 +93,81 @@ describe("disabledModuleKeys", () => {
   it("treats an absent module as enabled", () => {
     const { settings } = parseSettingsRows([]);
     expect(disabledModuleKeys(settings).size).toBe(0);
+  });
+});
+
+describe("registre des réglages", () => {
+  it("ne décrit que des réglages qui existent vraiment", () => {
+    // Une faute de frappe dans une clé ferait un champ que personne ne lit et
+    // que la base refuserait d'écrire. Le test l'attrape avant l'écran.
+    expect(unknownDefinitionKeys()).toEqual([]);
+  });
+
+  it("range chaque réglage dans un groupe connu", () => {
+    const groups = new Set(SETTING_GROUPS.map((group) => group.key));
+    for (const definition of SETTING_DEFINITIONS) {
+      expect(groups.has(definition.group)).toBe(true);
+    }
+  });
+
+  it("donne à chaque réglage un libellé et une aide", () => {
+    for (const definition of SETTING_DEFINITIONS) {
+      expect(definition.label.length).toBeGreaterThan(2);
+      expect(definition.help.length).toBeGreaterThan(10);
+    }
+  });
+
+  it("fait l'aller-retour formulaire pour chaque réglage décrit", () => {
+    // La valeur par défaut part vers le formulaire, revient, et doit être
+    // acceptée : c'est ce qui garantit qu'un gérant peut rouvrir un écran et
+    // réenregistrer sans rien casser.
+    for (const definition of SETTING_DEFINITIONS) {
+      const fields = toFormFields(definition.key, DEFAULT_SETTINGS);
+      const result = fromFormFields(definition.key, fields, DEFAULT_SETTINGS);
+      expect(result.ok, `aller-retour cassé pour ${definition.key}`).toBe(true);
+    }
+  });
+
+  it("refuse une fenêtre horaire qui finit avant de commencer", () => {
+    const result = fromFormFields(
+      "clock_check_window",
+      { start: "20:00", end: "07:00" },
+      DEFAULT_SETTINGS,
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it("refuse un nom d'entreprise vide", () => {
+    expect(fromFormFields("company_name", { value: "   " }, DEFAULT_SETTINGS).ok).toBe(false);
+  });
+
+  it("refuse une tolérance de retard qui n'est pas un nombre", () => {
+    expect(
+      fromFormFields("late_tolerance_minutes", { value: "beaucoup" }, DEFAULT_SETTINGS).ok,
+    ).toBe(false);
+  });
+
+  it("accepte une décimale écrite à la française", () => {
+    const result = fromFormFields("selfie_retention_days", { value: "90" }, DEFAULT_SETTINGS);
+    expect(result).toEqual({ ok: true, value: 90 });
+  });
+
+  it("garde le mode et le nombre de jours cohérents entre eux", () => {
+    // Personne ne doit pouvoir enregistrer « jours ouvrés, 2,5 j/mois » : cette
+    // règle-là n'existe pas, et c'est exactement l'incohérence de la V1.
+    const ouvres = fromFormFields("leave_rules", { mode: "ouvres" }, DEFAULT_SETTINGS);
+    expect(ouvres.ok && (ouvres.value as { days_per_month: number }).days_per_month).toBe(2.08);
+
+    const ouvrables = fromFormFields("leave_rules", { mode: "ouvrables" }, DEFAULT_SETTINGS);
+    expect(ouvrables.ok && (ouvrables.value as { days_per_month: number }).days_per_month).toBe(
+      2.5,
+    );
+  });
+
+  it("conserve les réglages de période que l'écran ne montre pas", () => {
+    const result = fromFormFields("leave_rules", { mode: "ouvres" }, DEFAULT_SETTINGS);
+    expect(result.ok && (result.value as { period_start_month: number }).period_start_month).toBe(
+      6,
+    );
   });
 });

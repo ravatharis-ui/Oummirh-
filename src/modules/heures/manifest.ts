@@ -44,6 +44,8 @@ export const heuresModule: AppModule = {
   key: "heures",
   name: "Heures",
   enabled: true,
+  description:
+    "Le solde d'heures et le bouton « Prendre mes heures supp ». Sans le pointage, il n'a rien à compter.",
   nav: {
     collab: [{ label: "Heures", href: "/heures", icon: Timer, roles: ["employee"] }],
     admin: [{ label: "Heures", href: "/admin/heures", icon: Timer, roles: ["admin"] }],
