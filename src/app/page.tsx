@@ -45,8 +45,10 @@ export default function HomePage() {
         </Card>
       </div>
 
-      <p className="text-muted-foreground text-xs">
-        Phase 0 — fondations. Les espaces arrivent en Phase 1 et 2.
+      <p className="text-muted-foreground text-sm">
+        <Link href="/confidentialite" className="underline underline-offset-4">
+          Ce que l&apos;application enregistre, et pendant combien de temps
+        </Link>
       </p>
     </main>
   );

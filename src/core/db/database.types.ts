@@ -1199,6 +1199,22 @@ export type Database = {
         Args: { p_active: boolean; p_id: string }
         Returns: undefined
       }
+      admin_clear_planning_template: {
+        Args: { p_employee_id: string; p_weekday: number }
+        Returns: boolean
+      }
+      admin_set_planning_template: {
+        Args: {
+          p_break_end?: string
+          p_break_start?: string
+          p_employee_id: string
+          p_end_time?: string
+          p_start_time?: string
+          p_status: string
+          p_weekday: number
+        }
+        Returns: string
+      }
       admin_set_public_holiday: {
         Args: { p_date: string; p_label: string }
         Returns: undefined

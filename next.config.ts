@@ -2,8 +2,10 @@ import type { NextConfig } from "next";
 
 /**
  * Security headers (see CLAUDE.md, "Sécurité").
- * The Content-Security-Policy with nonces is added in Phase 11 once every external
- * origin (Supabase, Vercel, Resend) is known; the other headers apply from day one.
+ *
+ * The Content-Security-Policy is **not** here: it carries a per-request nonce,
+ * so it is built in the middleware where a request exists. Everything below is
+ * the same for every response, and belongs in the static configuration.
  */
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -11,6 +13,10 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+  // Isole l'onglet des autres origines : sans cela, une page tierce ouverte par
+  // l'application pourrait mesurer ce qui s'y passe.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "X-DNS-Prefetch-Control", value: "off" },
 ];
 
 const nextConfig: NextConfig = {

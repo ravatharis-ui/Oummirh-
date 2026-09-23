@@ -432,6 +432,65 @@ Même manipulation que pour les selfies : `Storage` → **New bucket** → nom `
 
 ---
 
+## Étape 13 — Mise en production
+
+Jusqu'ici, l'application tourne sur un projet Supabase de test et une adresse `*.vercel.app`.
+Voici le passage en service réel. **Aucune étape ne demande d'installer quoi que ce soit.**
+
+### La checklist
+
+- [ ] **Un projet Supabase dédié aux vraies données.** Créez-le dans le tableau de bord Supabase,
+      région la plus proche. Notez la référence du projet et le mot de passe de la base.
+- [ ] **Les secrets GitHub pointent vers ce projet.** `Settings → Secrets and variables →
+Actions` : `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKEN`.
+- [ ] **Lancez le workflow « Base de données »**, tests cochés. Il crée toutes les tables et
+      vérifie les 382 règles de sécurité sur le nouveau projet.
+- [ ] **Les variables Vercel pointent vers ce projet.** `NEXT_PUBLIC_SUPABASE_URL` et
+      `NEXT_PUBLIC_SUPABASE_ANON_KEY` en type **Config** (jamais Secret — sinon l'application se
+      déploie sans savoir joindre la base), `SUPABASE_SERVICE_ROLE_KEY` en type Secret.
+- [ ] **`CRON_SECRET` et `EVENTS_DISPATCH_SECRET`** dans Vercel, en type Secret. Générez-les
+      depuis n'importe quel générateur de mot de passe, 32 caractères.
+- [ ] **Le webhook Supabase** vers `/api/events/dispatch`, avec l'en-tête
+      `Authorization: Bearer <EVENTS_DISPATCH_SECRET>` (étape 7).
+- [ ] **Les tâches planifiées** apparaissent dans Vercel, onglet **Cron Jobs**. Il y en a cinq.
+- [ ] **Votre nom de domaine** dans Vercel, onglet Domains. Vercel s'occupe du certificat.
+- [ ] **Le domaine d'envoi Resend vérifié** (étape 7). Sans lui, les emails partent en spam ou ne
+      partent pas — mais l'application fonctionne : les notifications dans l'application, elles,
+      arrivent toujours.
+- [ ] **Créez votre compte de direction** et les fiches des collaboratrices. Tirez chaque code PIN
+      depuis `/admin/collaboratrices` : il s'affiche une fois.
+- [ ] **Les jours fériés de l'année en cours et de la suivante** (Paramètres → Jours fériés).
+- [ ] **Réglez ce qui doit l'être** : règle d'acquisition des congés, tolérance de retard, durée
+      de conservation des photos (Paramètres).
+- [ ] **Faites le tour sur un téléphone** : installer l'application, se connecter, pointer, voir
+      son planning. C'est le vrai test.
+
+### Ce qu'il ne faut pas faire
+
+**Ne réutilisez pas les codes PIN de la V1.** Ils sont considérés comme compromis. Chaque
+collaboratrice en reçoit un nouveau.
+
+**Ne supprimez pas le projet de test tout de suite.** Gardez-le : c'est là qu'on essaiera les
+prochaines évolutions sans toucher aux vraies données.
+
+### Si une page devient blanche après un déploiement
+
+Une seule cause possible : la politique de sécurité du contenu. Dans Vercel, ajoutez la variable
+`CSP_REPORT_ONLY` avec la valeur `1`, redéployez — l'application refonctionne immédiatement, et on
+regarde ensuite ce qui coinçait. C'est prévu pour ça.
+
+### Mesurer la qualité depuis votre navigateur
+
+Chrome → F12 → onglet **Lighthouse** → cochez _Mobile_, _Performance_ et _Accessibilité_ →
+**Analyser**. Faites-le sur `/connexion`, connectée sur `/accueil`.
+
+L'accessibilité est déjà vérifiée automatiquement à chaque modification du code (12 contrôles
+axe-core sur les pages publiques, y compris les contrastes). Lighthouse ajoute la performance
+réelle, qui dépend de votre connexion et de votre téléphone : c'est pour ça qu'elle se mesure
+chez vous et pas ici.
+
+---
+
 ## Ce qui se passe ensuite
 
 À chaque phase terminée, le déroulé est toujours le même :

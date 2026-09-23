@@ -10,9 +10,11 @@ import { formatDuration, formatFrDateShort, isoWeekday, type DateString } from "
 import { cn } from "@/core/ui/utils";
 
 import { isProtectedSource, statusMeta } from "../../domain/status";
+import type { TemplateDay } from "../../server/queries";
 import type { PlanningEntry, PlanningRow, PlanningWeek } from "../../types";
 
 import { EntryPanel } from "./entry-panel";
+import { TemplateDialog } from "./template-dialog";
 
 const DAY_LABELS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 
@@ -30,8 +32,16 @@ interface Selection {
  * would produce something unusable on the one screen the direction actually
  * works from.
  */
-export function PlanningGrid({ week }: { week: PlanningWeek }) {
+export function PlanningGrid({
+  week,
+  templates,
+}: {
+  week: PlanningWeek;
+  /** Les semaines types, par collaboratrice. Chargées avec la page. */
+  templates: Record<string, TemplateDay[]>;
+}) {
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [templateFor, setTemplateFor] = useState<PlanningRow | null>(null);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -84,10 +94,17 @@ export function PlanningGrid({ week }: { week: PlanningWeek }) {
             {week.rows.map((row) => (
               <tr key={row.employeeId}>
                 <th scope="row" className="text-left align-middle font-medium">
-                  <span className="block">{row.displayName}</span>
-                  <span className="text-muted-foreground block text-xs font-normal">
-                    {row.boutiqueName}
-                  </span>
+                  {/* Le nom ouvre la semaine type : c'est là qu'on la cherche. */}
+                  <button
+                    type="button"
+                    className="hover:text-primary text-left underline-offset-4 hover:underline"
+                    onClick={() => setTemplateFor(row)}
+                  >
+                    <span className="block">{row.displayName}</span>
+                    <span className="text-muted-foreground block text-xs font-normal">
+                      {row.boutiqueName} · semaine type
+                    </span>
+                  </button>
                 </th>
 
                 {week.dates.map((date) => (
@@ -127,6 +144,16 @@ export function PlanningGrid({ week }: { week: PlanningWeek }) {
           </tbody>
         </table>
       </div>
+
+      {templateFor ? (
+        <TemplateDialog
+          employeeId={templateFor.employeeId}
+          employeeName={templateFor.displayName}
+          weekStart={week.weekStart}
+          template={templates[templateFor.employeeId] ?? []}
+          onClose={() => setTemplateFor(null)}
+        />
+      ) : null}
 
       {selection ? (
         <EntryPanel

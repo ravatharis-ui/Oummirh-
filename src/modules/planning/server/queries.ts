@@ -2,7 +2,13 @@ import "server-only";
 
 import { requireAdmin, requireEmployee } from "@/core/auth";
 import { createServerSupabaseClient } from "@/core/db/server";
-import { isoWeekDates, startOfIsoWeek, todayInReunion, type DateString } from "@/core/time";
+import {
+  isoWeekDates,
+  startOfIsoWeek,
+  todayInReunion,
+  type DateString,
+  type TimeString,
+} from "@/core/time";
 
 import { weekBalanceMinutes, weekMinutes, type PlannedDay } from "../domain/week";
 import type { PlanningEntry, PlanningRow, PlanningWeek, PresentColleague } from "../types";
@@ -187,5 +193,42 @@ export async function getPresence(date?: DateString): Promise<PresentColleague[]
     displayName: row.display_name,
     startTime: row.start_time,
     endTime: row.end_time,
+  }));
+}
+
+/** La semaine type d'une collaboratrice, lundi → dimanche. */
+export interface TemplateDay {
+  weekday: number;
+  status: string;
+  startTime: TimeString | null;
+  endTime: TimeString | null;
+  breakStart: TimeString | null;
+  breakEnd: TimeString | null;
+}
+
+/**
+ * Lit la semaine type.
+ *
+ * Elle ne change aucun planning par elle-même : elle sert à le remplir, jour
+ * par jour, quand la direction le demande. D'où sa place à part — ce n'est pas
+ * un planning, c'est une habitude.
+ */
+export async function getPlanningTemplate(employeeId: string): Promise<TemplateDay[]> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+
+  const { data } = await supabase
+    .from("planning_templates")
+    .select("weekday, status, start_time, end_time, break_start, break_end")
+    .eq("employee_id", employeeId)
+    .order("weekday");
+
+  return (data ?? []).map((row) => ({
+    weekday: row.weekday,
+    status: row.status,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    breakStart: row.break_start,
+    breakEnd: row.break_end,
   }));
 }

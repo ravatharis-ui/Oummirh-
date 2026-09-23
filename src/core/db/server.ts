@@ -31,7 +31,7 @@ export async function createServerSupabaseClient() {
             }
           } catch {
             // Server Components cannot write cookies once rendering has started.
-            // Refreshing the session is the middleware's job, added in Phase 2.
+            // Refreshing the session is the proxy's job (src/proxy.ts), added in Phase 2.
           }
         },
       },

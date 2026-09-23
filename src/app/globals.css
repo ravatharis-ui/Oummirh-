@@ -8,7 +8,15 @@
  * with a single accent colour. Change `--accent-brand` to re-theme the whole app.
  */
 :root {
-  --accent-brand: oklch(0.62 0.13 30); /* warm terracotta — the only accent colour */
+  /*
+   * Terracotta chaud — la seule couleur d'accent.
+   *
+   * Assombrie en Phase 11 : à 0.62, le texte blanc des boutons principaux
+   * tombait à 3,75:1, sous le 4,5:1 exigé par WCAG AA. Un test axe l'a mesuré.
+   * À 0.55 le contraste est de 5,05:1 — la couleur reste la même, elle tient
+   * juste dehors, en plein soleil, sur un téléphone.
+   */
+  --accent-brand: oklch(0.55 0.13 30);
 
   --background: oklch(0.985 0.005 80); /* off-white */
   --foreground: oklch(0.22 0.01 60); /* soft black */

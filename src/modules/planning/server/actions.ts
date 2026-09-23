@@ -158,3 +158,60 @@ export async function applyTemplate(
   revalidateWeek();
   return { ok: true, data: { applied: data ?? 0 } };
 }
+
+/**
+ * Définir une journée de la semaine type.
+ *
+ * La semaine type ne touche à aucun planning existant. Elle décrit une
+ * habitude — « le mercredi, elle est à l'école » — que `applyTemplate` viendra
+ * poser sur une semaine donnée, et seulement sur ses journées vides.
+ */
+export async function saveTemplateDay(
+  employeeId: string,
+  weekday: number,
+  status: string,
+  times: { startTime?: string | null; endTime?: string | null } = {},
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.rpc("admin_set_planning_template", {
+    p_employee_id: employeeId,
+    p_weekday: weekday,
+    p_status: status,
+    ...(times.startTime ? { p_start_time: times.startTime } : {}),
+    ...(times.endTime ? { p_end_time: times.endTime } : {}),
+  });
+
+  if (error) {
+    console.error("[planning] Semaine type non enregistrée", error.message);
+    return {
+      ok: false,
+      error: toFrenchError(error.message, "La semaine type n'a pas pu être enregistrée."),
+    };
+  }
+
+  revalidateWeek();
+  return { ok: true, data: undefined };
+}
+
+export async function clearTemplateDay(employeeId: string, weekday: number): Promise<ActionResult> {
+  await requireAdmin();
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.rpc("admin_clear_planning_template", {
+    p_employee_id: employeeId,
+    p_weekday: weekday,
+  });
+
+  if (error) {
+    console.error("[planning] Semaine type non effacée", error.message);
+    return {
+      ok: false,
+      error: toFrenchError(error.message, "La semaine type n'a pas pu être modifiée."),
+    };
+  }
+
+  revalidateWeek();
+  return { ok: true, data: undefined };
+}

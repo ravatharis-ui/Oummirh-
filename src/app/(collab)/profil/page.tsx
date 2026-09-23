@@ -1,5 +1,6 @@
 import { LogOut, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { signOut } from "@/core/auth/actions";
 import { requireEmployee } from "@/core/auth";
@@ -62,6 +63,12 @@ export default async function ProfilePage() {
           <LogOut className="size-5" aria-hidden /> Se déconnecter
         </Button>
       </form>
+
+      <p className="text-muted-foreground text-center text-base">
+        <Link href="/confidentialite" className="underline underline-offset-4">
+          Ce que l&apos;application enregistre
+        </Link>
+      </p>
     </div>
   );
 }

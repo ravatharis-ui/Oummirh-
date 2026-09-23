@@ -24,7 +24,8 @@ const eslintConfig = defineConfig([
     settings: {
       "boundaries/include": ["src/**/*"],
       // Next requires this file at the root of `src`; it belongs to no element.
-      "boundaries/ignore": ["src/middleware.ts"],
+      // Named `proxy.ts` since Next 16 renamed the middleware convention.
+      "boundaries/ignore": ["src/proxy.ts"],
       "boundaries/elements": [
         { type: "app", pattern: "src/app", partialMatch: false },
         { type: "core", pattern: "src/core", partialMatch: false },

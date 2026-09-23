@@ -502,3 +502,54 @@ insufficient_privilege`.** Sur un projet hébergé, `storage.objects` n'appartie
   - **`first_viewed_at` est écrit par la base**, jamais par le navigateur : une collaboratrice ne
     peut ni prétendre n'avoir rien vu, ni marquer ce qu'elle n'a pas ouvert. Et seule la première
     ouverture est retenue — combien de fois elle relit son bulletin ne regarde personne.
+
+- **Phase 11** (finitions et mise en production) :
+  - **`src/middleware.ts` est devenu `src/proxy.ts`.** Next 16 a renommé la convention, et
+    l'ancien nom imprimait un avertissement de dépréciation à chaque build. Même comportement,
+    même position dans la requête, un nom d'export différent.
+  - **La CSP est construite dans une fonction pure** (`src/core/security/csp.ts`), pas dans le
+    proxy. C'est la seule pièce de l'application qui peut casser **toutes** les pages à la fois :
+    elle mérite d'être testable sans navigateur, et elle l'est (9 tests Vitest).
+  - **`style-src` garde `'unsafe-inline'` sans nonce, délibérément.** Avec un nonce, les
+    navigateurs ignorent `'unsafe-inline'` — y compris pour les attributs `style=""` que React et
+    plusieurs composants posent en permanence. Une feuille de style injectée n'exécute pas de
+    code : échanger une protection marginale contre un risque d'écran blanc serait un mauvais
+    marché. Le nonce et `'strict-dynamic'` protègent là où ça compte, sur `script-src`.
+  - **`CSP_REPORT_ONLY=1` est la sortie de secours du propriétaire.** Une politique trop stricte
+    serait un site mort sans personne pour le réparer depuis un navigateur. Une variable dans
+    Vercel, un redéploiement, et l'application refonctionne pendant qu'on regarde.
+  - **Quatre tests Playwright prouvent que la CSP ne bloque rien** : en-tête présent, nonce
+    différent à chaque visite, aucune violation en console, et une navigation client qui
+    fonctionne — parce qu'une page rendue sans scripts s'affiche très bien et ne répond à rien.
+  - **Un vrai manquement d'accessibilité trouvé et corrigé.** Le texte blanc des boutons
+    principaux était à 3,75:1 sur la terracotta d'origine, sous le 4,5:1 de WCAG AA. `axe-core`
+    l'a mesuré ; la couleur d'accent est passée de `oklch(0.62 …)` à `oklch(0.55 …)`, soit
+    5,05:1. Un seul jeton changé, toute l'application avec. C'est exactement ce que la note en
+    tête de `globals.css` promettait.
+  - **L'audit RLS (`0013`) est écrit par énumération, pas par liste.** Une table ajoutée demain
+    sans protection fera échouer ce fichier sans que personne ait à y penser : c'est ce qu'on
+    attend d'un audit, qu'il continue à travailler après le départ de son auteur.
+  - **L'audit a trouvé une porte restée ouverte** : `planning_entries` et `planning_templates`
+    étaient encore écrites directement depuis le navigateur. Pas une faille — la RLS tenait —
+    mais une écriture directe contourne le journal d'audit, l'annonce à la collaboratrice et la
+    protection des journées posées par un congé. Autrement dit, tout ce qui fait qu'un planning
+    est autre chose qu'un tableau.
+  - **Une capacité sans porte d'entrée n'est pas une fonctionnalité.** `admin_apply_planning_
+template` savait appliquer une semaine type que rien ne savait créer. La fermeture des
+    écritures directes a rendu le manque visible ; `admin_set_planning_template` et l'écran qui
+    s'ouvre en cliquant un prénom dans la matrice le comblent.
+  - **La page de confidentialité est hors de tout espace protégé**, et lisible avant connexion :
+    on ne peut pas demander d'accepter quelque chose qu'on n'a pas pu lire. Les durées affichées
+    sont lues dans les réglages, donc elles suivent ce que la direction a vraiment configuré.
+  - **Pas de service worker, volontairement.** La PWA sert à installer l'application sur un écran
+    d'accueil, pas à fonctionner hors ligne : un pointage mis en file d'attente reviendrait à
+    accepter une heure venue du téléphone. À noter pour le jour où les notifications push en
+    imposeront un — il ne devra rien mettre en cache qui ressemble à un pointage.
+  - **`docs/EVOLUTIONS.md` répond à PROMPT.md §10.** Deux points de friction réels : le rôle
+    `manager` (une migration par module, purement additive, à faire avant que les politiques RLS
+    grossissent encore) et le multi-entreprises (à traiter par un projet Supabase par marque,
+    pas par une colonne `company_id` partout).
+  - **Le parcours Playwright à trois acteurs reste couvert par pgTAP `0011`.** Un vrai parcours
+    navigateur demanderait un projet de test et des sessions préparées ; écrire un test qui ne
+    peut pas s'exécuter contredirait la règle que ce projet s'est donnée après deux incidents —
+    un fichier de test jamais exécuté est un fichier de test faux.
