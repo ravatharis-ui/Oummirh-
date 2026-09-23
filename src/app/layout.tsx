@@ -22,6 +22,20 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
+/**
+ * Toute l'application est rendue à la requête.
+ *
+ * Ce n'est pas un réglage de performance, c'est ce qui fait tenir la politique
+ * de sécurité du contenu : Next pose le nonce pendant le rendu serveur, à
+ * partir de l'en-tête de la requête. Une page fabriquée à la construction n'a
+ * pas de requête, donc pas de nonce — ses scripts seraient bloqués par la
+ * politique que le proxy pose quand même. Une page d'accueil et un écran de
+ * connexion qui s'affichent mais ne répondent à rien, c'est exactement ce que
+ * la CI a attrapé. Posé sur la mise en page racine, ce réglage vaut pour toutes
+ * les pages en dessous.
+ */
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = {
   themeColor: "#b14f42",
   width: "device-width",

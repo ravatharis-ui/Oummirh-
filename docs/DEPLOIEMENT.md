@@ -473,6 +473,11 @@ collaboratrice en reçoit un nouveau.
 **Ne supprimez pas le projet de test tout de suite.** Gardez-le : c'est là qu'on essaiera les
 prochaines évolutions sans toucher aux vraies données.
 
+### Si une page s'affiche mais ne réagit à rien
+
+Même cause que la page blanche, et même remède : `CSP_REPORT_ONLY=1` dans Vercel, puis
+redéploiement. Dites-le moi ensuite, c'est un défaut à corriger, pas un réglage à laisser.
+
 ### Si une page devient blanche après un déploiement
 
 Une seule cause possible : la politique de sécurité du contenu. Dans Vercel, ajoutez la variable

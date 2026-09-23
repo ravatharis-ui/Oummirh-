@@ -545,6 +545,18 @@ template` savait appliquer une semaine type que rien ne savait créer. La fermet
     d'accueil, pas à fonctionner hors ligne : un pointage mis en file d'attente reviendrait à
     accepter une heure venue du téléphone. À noter pour le jour où les notifications push en
     imposeront un — il ne devra rien mettre en cache qui ressemble à un pointage.
+  - **Toute l'application est rendue à la requête** (`dynamic = "force-dynamic"` sur la mise en
+    page racine). Ce n'est pas un réglage de performance : Next pose le nonce pendant le rendu
+    serveur, à partir de l'en-tête de la requête. Une page fabriquée à la construction n'a pas de
+    requête, donc pas de nonce, et ses scripts sont bloqués par la politique que le proxy pose
+    quand même. L'accueil, la connexion et la confidentialité étaient statiques : en production,
+    elles s'affichaient et ne répondaient à rien. Personne ne pouvait se connecter.
+  - **La CI construit et sert l'application ; `npm run test:e2e` la sert en mode développement.**
+    Les deux ne prouvent pas la même chose, et c'est ce trou qui a laissé passer le défaut
+    ci-dessus : les 74 tests passaient ici et échouaient sur GitHub. `npm run test:e2e:prod`
+    reproduit les conditions de la CI et **c'est lui qui fait foi avant une livraison**. Troisième
+    occurrence de la même règle : un test qui ne s'exécute pas dans les conditions réelles ne
+    prouve rien.
   - **`docs/EVOLUTIONS.md` répond à PROMPT.md §10.** Deux points de friction réels : le rôle
     `manager` (une migration par module, purement additive, à faire avant que les politiques RLS
     grossissent encore) et le multi-entreprises (à traiter par un projet Supabase par marque,
