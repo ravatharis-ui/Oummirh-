@@ -29,7 +29,10 @@ export interface LeaveMovement {
 /** Ce que l'écran de la collaboratrice montre en une fois. */
 export interface MyLeaveState {
   employeeId: string;
+  /** La période en cours, celle qui contient aujourd'hui. */
   periodStart: DateString;
+  /** Celle que l'écran affiche : la même, ou une passée. */
+  selectedPeriod: DateString;
   balance: number;
   requests: LeaveRequestRow[];
   movements: LeaveMovement[];

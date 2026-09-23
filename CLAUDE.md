@@ -684,3 +684,16 @@ template` savait appliquer une semaine type que rien ne savait créer. La fermet
   - **`CounterCard` est dans `core/ui` et ne sait rien du métier** : ni ce qu'est un congé, ni ce
     qu'est une heure. Chaque module formate ses propres valeurs et passe des chaînes. C'est ce qui
     permet aux deux compteurs d'avoir la même forme sans qu'un module dépende de l'autre.
+  - **Les flèches de période sont des liens, pas des boutons.** Chaque période a son adresse
+    (`/conges?periode=2025-06-01`), la navigation fonctionne si le JavaScript ne charge jamais, et
+    la place vide d'une flèche absente est conservée — sans elle le titre se décale et l'œil croit
+    que l'écran a changé.
+  - **Pas de flèche au-delà de la période en cours** : les congés d'une année qui n'a pas commencé
+    ne veulent rien dire.
+  - **Sur une période passée, le chiffre du milieu change de nom** : « Solde aujourd'hui » et non
+    « Jours disponibles ». Il n'existe qu'un solde, celui du jour ; le laisser étiqueté
+    « disponibles » sous une année révolue laisserait croire qu'on peut encore y poser des congés.
+    Le formulaire de demande disparaît pour la même raison.
+  - **Le registre est lu sur les bornes de la période affichée**, et non avec une limite de lignes.
+    Une liste tronquée donnerait des « jours acquis » faux — et un compteur faux vaut moins que
+    pas de compteur.

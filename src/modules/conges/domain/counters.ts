@@ -2,6 +2,8 @@ import type { DateString } from "@/core/time";
 
 import type { LeaveMovement } from "../types";
 
+import { periodEnd } from "./period";
+
 /**
  * Les trois chiffres d'un compteur de congés.
  *
@@ -21,11 +23,8 @@ export interface LeaveCounters {
 }
 
 /** La période juin → mai qui contient ce jour-là. */
-function inPeriod(occurredOn: DateString, periodStart: DateString): boolean {
-  const start = periodStart;
-  const [year] = periodStart.split("-");
-  const end = `${Number(year) + 1}-06-01`;
-  return occurredOn >= start && occurredOn < end;
+function inPeriod(occurredOn: DateString, start: DateString): boolean {
+  return occurredOn >= start && occurredOn < periodEnd(start);
 }
 
 /**

@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from "@/core/db/server";
 import { addDays, todayInReunion, type DateString } from "@/core/time";
 
 import { isLeaveStatus, type HalfDay, type LeaveStatus } from "../domain/count";
+import { periodEnd, periodStart } from "../domain/period";
 import type {
   LeaveBalanceRow,
   LeaveMovement,
@@ -58,12 +59,17 @@ function toRequest(raw: RawRequest, displayName: string): LeaveRequestRow {
  * sélection doit pouvoir dire « ces trois jours ne te coûteront rien » avant
  * qu'elle valide, pas après.
  */
-export async function getMyLeaveState(): Promise<MyLeaveState> {
+export async function getMyLeaveState(requestedPeriod?: DateString): Promise<MyLeaveState> {
   const { employeeId } = await requireEmployee();
   const supabase = await createServerSupabaseClient();
 
   const today = todayInReunion();
   const horizon = addDays(today, 400);
+
+  // La période demandée, ou celle d'aujourd'hui. Calculée avant la requête
+  // puisque le registre est lu sur ses bornes.
+  const currentPeriod = periodStart(today);
+  const selectedPeriod = requestedPeriod ?? currentPeriod;
 
   const [
     periodResult,
@@ -80,11 +86,14 @@ export async function getMyLeaveState(): Promise<MyLeaveState> {
       .select(REQUEST_COLUMNS)
       .order("start_date", { ascending: false })
       .limit(50),
+    // Bornée à la période regardée : les compteurs en dépendent, et une liste
+    // tronquée par une limite donnerait des « jours acquis » faux.
     supabase
       .from("leave_ledger")
       .select("id, kind, days, occurred_on, note")
-      .order("occurred_on", { ascending: false })
-      .limit(50),
+      .gte("occurred_on", selectedPeriod)
+      .lt("occurred_on", periodEnd(selectedPeriod))
+      .order("occurred_on", { ascending: false }),
     supabase.from("public_holidays").select("date").gte("date", today).lte("date", horizon),
     supabase
       .from("planning_entries")
@@ -94,7 +103,9 @@ export async function getMyLeaveState(): Promise<MyLeaveState> {
       .in("status", ["rest", "school"]),
   ]);
 
-  const periodStart: DateString = periodResult.data ?? today;
+  // La base fait autorité sur la période courante ; le calcul local n'a servi
+  // qu'à borner la lecture du registre.
+  const period: DateString = periodResult.data ?? currentPeriod;
 
   const movements: LeaveMovement[] = (movementsResult.data ?? []).map((row) => ({
     id: row.id,
@@ -106,7 +117,8 @@ export async function getMyLeaveState(): Promise<MyLeaveState> {
 
   return {
     employeeId,
-    periodStart,
+    periodStart: period,
+    selectedPeriod,
     balance: Number(balanceResult.data ?? 0),
     requests: ((requestsResult.data ?? []) as RawRequest[]).map((raw) => toRequest(raw, "")),
     movements,

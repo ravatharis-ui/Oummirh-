@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { leaveCounters } from "../domain/counters";
+import { periodEnd, shiftPeriod } from "../domain/period";
 import type { LeaveMovement } from "../types";
 
 import { countLeaveDays, formatLeaveDays } from "../domain/count";
@@ -212,5 +213,24 @@ describe("les trois chiffres du compteur de congés", () => {
 
     expect(counters.earned).toBe(2.5);
     expect(counters.used).toBe(0);
+  });
+});
+
+describe("la navigation entre périodes", () => {
+  it("recule et avance d'un an, au même jour", () => {
+    expect(shiftPeriod("2026-06-01", -1)).toBe("2025-06-01");
+    expect(shiftPeriod("2026-06-01", 1)).toBe("2027-06-01");
+  });
+
+  it("la fin d'une période est le début de la suivante", () => {
+    // Borne exclusive : un mouvement du 1er juin appartient à la nouvelle année.
+    expect(periodEnd("2026-06-01")).toBe("2027-06-01");
+  });
+
+  it("une année bissextile ne décale rien", () => {
+    // Les périodes s'ouvrent au 1er juin : le 29 février ne les concerne pas,
+    // mais un décalage écrit à la main l'aurait attrapé.
+    expect(shiftPeriod("2024-06-01", 1)).toBe("2025-06-01");
+    expect(shiftPeriod("2023-06-01", 1)).toBe("2024-06-01");
   });
 });

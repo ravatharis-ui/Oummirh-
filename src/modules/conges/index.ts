@@ -21,7 +21,9 @@ export {
 export {
   DEFAULT_LEAVE_RULES,
   monthlyAccrual,
+  periodEnd,
   periodLabel,
+  shiftPeriod,
   periodStart,
   type LeaveRules,
 } from "./domain/period";

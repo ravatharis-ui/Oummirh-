@@ -37,6 +37,32 @@ export function periodStart(date: DateString, rules: LeaveRules = DEFAULT_LEAVE_
   );
 }
 
+/**
+ * La période précédente, ou la suivante.
+ *
+ * Décaler d'un an suffit : la période s'ouvre au même jour de mois chaque
+ * année. Écrit ici plutôt que dans l'écran pour que le libellé et le décalage
+ * restent d'accord.
+ */
+export function shiftPeriod(start: DateString, years: number): DateString {
+  const anchored = parseDateString(start);
+  return toDateString(
+    new Date(
+      Date.UTC(
+        anchored.getUTCFullYear() + years,
+        anchored.getUTCMonth(),
+        anchored.getUTCDate(),
+        12,
+      ),
+    ),
+  );
+}
+
+/** La fin exclusive d'une période : le 1er juin suivant. */
+export function periodEnd(start: DateString): DateString {
+  return shiftPeriod(start, 1);
+}
+
 /** "juin 2026 → mai 2027" */
 export function periodLabel(start: DateString): string {
   const anchored = parseDateString(start);
