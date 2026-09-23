@@ -931,7 +931,10 @@ export type Database = {
           start_date: string
         }[]
       }
-      admin_remove_public_holiday: { Args: { p_date: string }; Returns: boolean }
+      admin_remove_public_holiday: {
+        Args: { p_date: string }
+        Returns: boolean
+      }
       admin_set_boutique_active: {
         Args: { p_active: boolean; p_id: string }
         Returns: undefined
@@ -940,7 +943,10 @@ export type Database = {
         Args: { p_date: string; p_label: string }
         Returns: undefined
       }
-      admin_set_setting: { Args: { p_key: string; p_value: Json }; Returns: undefined }
+      admin_set_setting: {
+        Args: { p_key: string; p_value: Json }
+        Returns: undefined
+      }
       admin_upsert_boutique: {
         Args: {
           p_address?: string
