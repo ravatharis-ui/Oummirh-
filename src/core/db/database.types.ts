@@ -956,6 +956,7 @@ export type Database = {
           occurred_at: string
           photo_path: string | null
           planned_time: string | null
+          seq: number
         }
         Insert: {
           boutique_id: string
@@ -971,6 +972,7 @@ export type Database = {
           occurred_at?: string
           photo_path?: string | null
           planned_time?: string | null
+          seq?: never
         }
         Update: {
           boutique_id?: string
@@ -986,6 +988,7 @@ export type Database = {
           occurred_at?: string
           photo_path?: string | null
           planned_time?: string | null
+          seq?: never
         }
         Relationships: [
           {
@@ -1379,6 +1382,7 @@ export type Database = {
           occurred_at: string
           photo_path: string | null
           planned_time: string | null
+          seq: number
         }
         SetofOptions: {
           from: "*"
