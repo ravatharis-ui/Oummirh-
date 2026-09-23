@@ -1097,6 +1097,10 @@ export type Database = {
         Returns: number
       }
       admin_cancel_replacement: { Args: { p_id: string }; Returns: undefined }
+      admin_clear_planning_template: {
+        Args: { p_employee_id: string; p_weekday: number }
+        Returns: boolean
+      }
       admin_correct_time_clock: {
         Args: {
           p_employee_id: string
@@ -1198,10 +1202,6 @@ export type Database = {
       admin_set_boutique_active: {
         Args: { p_active: boolean; p_id: string }
         Returns: undefined
-      }
-      admin_clear_planning_template: {
-        Args: { p_employee_id: string; p_weekday: number }
-        Returns: boolean
       }
       admin_set_planning_template: {
         Args: {
