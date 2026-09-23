@@ -8,6 +8,8 @@ export interface JobRun {
   ok: boolean;
   error: string | null;
   consecutiveFailures: number;
+  /** Dernière alerte envoyée à la direction, `null` si aucune en cours. */
+  alertedAt?: string | null;
 }
 
 export type JobStatus = "ok" | "late" | "failing" | "never";
@@ -71,4 +73,54 @@ export function formatJobAge(ageMinutes: number | null): string {
 
   const days = Math.floor(hours / 24);
   return days === 1 ? "hier" : `il y a ${days} jours`;
+}
+
+/** Une alerte n'est pas répétée avant ce délai, même si la panne dure. */
+export const ALERT_COOLDOWN_HOURS = 24;
+
+/**
+ * Faut-il prévenir la direction pour cette tâche ?
+ *
+ * Trois refus délibérés :
+ *   - **`never` n'alerte pas.** Sur une installation neuve, une tâche de nuit
+ *     n'a pas encore tourné et c'est normal ; un voyant rouge injustifié apprend
+ *     à ne plus regarder les voyants.
+ *   - **une alerte déjà envoyée ne repart pas**, tant que la panne dure. Le
+ *     guetteur passe toutes les minutes ; sans ce frein, une panne de week-end
+ *     ferait trois mille notifications.
+ *   - **mais elle repart au bout de 24 h.** Une panne qu'on a laissée courir une
+ *     journée mérite un second rappel, sinon la première notification se perd
+ *     sous les autres.
+ */
+export function shouldAlert(health: JobHealth, now: Date = new Date()): boolean {
+  if (health.status !== "late" && health.status !== "failing") return false;
+
+  const alertedAt = health.run?.alertedAt;
+  if (!alertedAt) return true;
+
+  const hours = (now.getTime() - Date.parse(alertedAt)) / 3_600_000;
+  return hours >= ALERT_COOLDOWN_HOURS;
+}
+
+/**
+ * Ce que la direction lit dans sa cloche.
+ *
+ * Le libellé dit quelle tâche, la phrase dit **ce qu'on est en train de
+ * perdre** — pas « erreur technique ». Le gérant doit pouvoir décider s'il
+ * m'appelle tout de suite ou lundi sans avoir à comprendre ce qu'est un cron.
+ */
+export function alertTitle(health: JobHealth): string {
+  return health.status === "failing"
+    ? `${health.definition.label} : en échec`
+    : `${health.definition.label} : plus rien depuis ${formatJobAge(health.ageMinutes)}`;
+}
+
+export function alertBody(health: JobHealth): string {
+  const consequence = health.definition.description;
+
+  return health.status === "failing"
+    ? `${consequence} La tâche s'est lancée mais a échoué${
+        health.run?.error ? ` : ${health.run.error}` : "."
+      } Prévenez votre développeur.`
+    : `${consequence} Elle aurait dû se relancer depuis longtemps. Prévenez votre développeur.`;
 }

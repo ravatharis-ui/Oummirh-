@@ -4,6 +4,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { recordJobRun } from "./record";
+import { checkJobsAndAlert } from "./watchdog";
 
 /** What a scheduled task reports when it finishes: counts, never prose. */
 export type ScheduledResult = object;
@@ -58,11 +59,13 @@ export function scheduledRoute({ job, secrets, run }: ScheduledRouteOptions) {
     try {
       const summary = await run();
       await recordJobRun(job, true, summary);
+      await checkJobsAndAlert();
       return NextResponse.json({ ok: true, ...summary });
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : String(cause);
       console.error(`[jobs] « ${job} » a échoué`, message);
       await recordJobRun(job, false, {}, message);
+      await checkJobsAndAlert();
       return NextResponse.json({ ok: false, error: message }, { status: 500 });
     }
   };

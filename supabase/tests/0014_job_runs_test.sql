@@ -10,7 +10,7 @@
 -- quand ça dure.
 
 begin;
-select plan(11);
+select plan(15);
 
 -- ---------------------------------------------------------------- fixtures --
 insert into auth.users (id, email) values
@@ -94,6 +94,41 @@ select is(
   (select count(*) from public.job_runs where job = 'conges.accrual'),
   1::bigint,
   'Trois passages ne font qu''une ligne : la table répond sur le dernier, pas sur l''histoire'
+);
+
+-- ========================================================= l'alerte ==========
+select is(
+  (select alerted_at from public.job_runs where job = 'conges.accrual'),
+  null::timestamptz,
+  'Une tâche fraîchement enregistrée ne porte aucune alerte'
+);
+
+select public.mark_job_alerted('conges.accrual');
+
+select isnt(
+  (select alerted_at from public.job_runs where job = 'conges.accrual'),
+  null::timestamptz,
+  'L''alerte envoyée est horodatée, pour ne pas repartir à chaque passage'
+);
+
+-- Un passage réussi referme l'alerte : une tâche qui retombera en panne dans six
+-- mois doit pouvoir réalerter.
+select public.record_job_run('conges.accrual', true, '{}'::jsonb, null);
+
+select is(
+  (select alerted_at from public.job_runs where job = 'conges.accrual'),
+  null::timestamptz,
+  'Un passage réussi referme l''alerte'
+);
+
+-- `mark_job_alerted` ne crée jamais de ligne : en fabriquer une pour une tâche
+-- qui n'a jamais tourné la ferait passer pour « en échec à l'instant ».
+select public.mark_job_alerted('tache.inexistante');
+
+select is(
+  (select count(*) from public.job_runs where job = 'tache.inexistante'),
+  0::bigint,
+  'Marquer une tâche qui n''a jamais tourné ne lui invente pas de passage'
 );
 
 -- ================================================ qui voit quoi, et qui écrit =

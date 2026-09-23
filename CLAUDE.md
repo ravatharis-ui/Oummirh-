@@ -641,3 +641,28 @@ template` savait appliquer une semaine type que rien ne savait créer. La fermet
   - **Une vue recréée renaît écrivable.** Toute migration qui touche à une vue se termine par
     `select public.revoke_view_write_privileges();` — la plateforme réapplique ses droits par
     défaut à chaque `create or replace view`.
+
+- **Le guetteur des tâches planifiées** (suite de la carte : « préviens-moi sans que j'aie à
+  regarder ») :
+  - **Le guetteur n'a pas sa propre tâche planifiée, et c'est le cœur de l'affaire.** Une tâche
+    chargée de surveiller les tâches serait sujette au silence même qu'elle doit détecter, et
+    rien ne la surveillerait. `checkJobsAndAlert()` s'exécute donc **à la fin de chaque passage**,
+    quel qu'il soit : le distributeur tournant toutes les minutes, le guetteur tourne toutes les
+    minutes, et il survit à l'arrêt de n'importe laquelle des autres.
+  - **Sa limite est assumée et écrite** : si toutes les tâches s'arrêtent ensemble, plus personne
+    ne passe donc plus personne ne guette. Ce cas reste visible sur le tableau de bord, jamais par
+    notification — aucune alerte ne part d'une machine éteinte.
+  - **`alerted_at` fait qu'une alerte part une fois**, pas à chaque minute : une panne de week-end
+    ferait sinon trois mille notifications. Elle repart au bout de 24 h, parce qu'une panne qu'on
+    a laissée courir une journée mérite un rappel. Un passage réussi la remet à `null`.
+  - **`mark_job_alerted` ne crée jamais de ligne.** La première version le faisait, et une tâche
+    jamais lancée se serait affichée « en échec à l'instant » : un écran de santé qui ment est
+    pire que pas d'écran. C'est la même raison qui fait que **`never` n'alerte pas**.
+  - **Le guetteur appelle `notify_user` directement**, sans passer par `createNotifier` et le
+    registre des modules. `core/jobs` n'est pas un module et ne peut pas déclarer de
+    `notificationType` ; comme le titre et le corps sont **stockés** dans la ligne, la cloche les
+    affiche sans rien chercher. Le registre des tâches porte donc la formulation de sa propre
+    alerte, exactement comme un manifeste de module porte la sienne.
+  - **Le message dit ce qu'on perd**, pas « erreur technique » : « Crédite les jours acquis chaque
+    mois… Sans elle, les soldes ne montent plus. » Le gérant doit pouvoir décider s'il appelle
+    tout de suite ou lundi sans savoir ce qu'est une tâche planifiée.

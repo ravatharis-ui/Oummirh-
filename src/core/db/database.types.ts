@@ -401,6 +401,7 @@ export type Database = {
       }
       job_runs: {
         Row: {
+          alerted_at: string | null
           consecutive_failures: number
           error: string | null
           job: string
@@ -410,6 +411,7 @@ export type Database = {
           summary: Json
         }
         Insert: {
+          alerted_at?: string | null
           consecutive_failures?: number
           error?: string | null
           job: string
@@ -419,6 +421,7 @@ export type Database = {
           summary?: Json
         }
         Update: {
+          alerted_at?: string | null
           consecutive_failures?: number
           error?: string | null
           job?: string
@@ -1460,6 +1463,7 @@ export type Database = {
         Returns: undefined
       }
       mark_event_processed: { Args: { p_id: string }; Returns: undefined }
+      mark_job_alerted: { Args: { p_job: string }; Returns: undefined }
       mark_notification_emailed: { Args: { p_id: string }; Returns: undefined }
       mark_selfies_purged: { Args: { p_paths: string[] }; Returns: number }
       midday_boundary: {
