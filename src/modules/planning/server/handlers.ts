@@ -22,6 +22,8 @@ interface RangePayload {
   boutiqueId?: string;
   startTime?: string;
   endTime?: string;
+  breakStart?: string;
+  breakEnd?: string;
 }
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -65,6 +67,8 @@ function readRange(event: DomainEvent, kind: string): RangePayload {
     ...(asString(payload.boutique_id) ? { boutiqueId: asString(payload.boutique_id) } : {}),
     ...(asString(payload.start_time) ? { startTime: asString(payload.start_time) } : {}),
     ...(asString(payload.end_time) ? { endTime: asString(payload.end_time) } : {}),
+    ...(asString(payload.break_start) ? { breakStart: asString(payload.break_start) } : {}),
+    ...(asString(payload.break_end) ? { breakEnd: asString(payload.break_end) } : {}),
   } as RangePayload;
 }
 
@@ -85,6 +89,8 @@ async function applyRange(
     ...(range.boutiqueId ? { p_boutique_id: range.boutiqueId } : {}),
     ...(range.startTime ? { p_start_time: range.startTime } : {}),
     ...(range.endTime ? { p_end_time: range.endTime } : {}),
+    ...(range.breakStart ? { p_break_start: range.breakStart } : {}),
+    ...(range.breakEnd ? { p_break_end: range.breakEnd } : {}),
   });
 
   if (error) {
@@ -151,8 +157,37 @@ export const planningEventHandlers: Record<string, EventHandler> = {
     await clearRange("replacement", ref);
   },
 
+  /**
+   * Un échange validé ne pose pas des journées : il en **échange** deux. Ce que
+   * la demandeuse faisait ce jour-là, sa collègue le fera, et réciproquement.
+   * `apply_planning_swap` repart des deux lignes d'origine, donc rejouer
+   * l'événement ne réinverse pas l'échange.
+   */
   "swaps.approved": async (event) => {
-    await applyRange(readRange(event, "échange"), "work", "swap");
+    const payload = asRecord(event.payload);
+
+    const swapId = asString(payload.id) ?? event.id;
+    const requesterId = asString(payload.requester_id);
+    const requesterDate = asString(payload.requester_date);
+    const partnerId = asString(payload.partner_id);
+    const partnerDate = asString(payload.partner_date);
+
+    if (!requesterId || !requesterDate || !partnerId || !partnerDate) {
+      throw new Error(`Événement d'échange inexploitable : il manque une journée (${event.id}).`);
+    }
+
+    const admin = createAdminSupabaseClient();
+    const { error } = await admin.rpc("apply_planning_swap", {
+      p_swap_id: swapId,
+      p_requester_id: requesterId,
+      p_requester_date: requesterDate,
+      p_partner_id: partnerId,
+      p_partner_date: partnerDate,
+    });
+
+    if (error) {
+      throw new Error(`Échange non appliqué au planning : ${error.message}`);
+    }
   },
 
   /**

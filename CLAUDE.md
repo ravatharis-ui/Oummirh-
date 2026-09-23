@@ -434,3 +434,39 @@ insufficient_privilege`.** Sur un projet hébergé, `storage.objects` n'appartie
     par défaut part vers le formulaire, revient, et doit être acceptée — ce qui garantit qu'un
     gérant peut rouvrir un écran et réenregistrer sans rien casser. Un réglage ajouté plus tard
     sans traduction correcte fera échouer ce test avant d'atteindre l'écran.
+
+- **Phases 8 et 9** (remplacements directs puis échanges de créneaux) :
+  - **`planning_snapshots` : avant d'écraser une journée, on garde ce qu'elle contenait.**
+    Un manque révélé par la Phase 8, qui frappait déjà la Phase 6 sans qu'on l'ait vu : annuler
+    un congé effaçait la ligne de congé et laissait un **trou** là où il y avait une journée de
+    travail. Deux subtilités décident de tout : le cliché est pris `on conflict do nothing` —
+    rejouer un événement ne doit pas remplacer le cliché d'origine par la ligne déjà appliquée —
+    et on ne restaure **que si la journée appartient encore** à la demande qui l'avait posée. Une
+    saisie manuelle de la direction depuis est une décision plus récente, et on ne défait pas une
+    décision plus récente.
+  - **La liste des candidates n'est pas filtrée, elle est qualifiée.** « Déjà ailleurs ce jour-là »
+    n'est pas un refus — c'est parfois exactement la personne à déplacer, et l'écran prévient que
+    l'autre point de vente se retrouvera sans elle. Seul un congé, une maladie ou un jour d'école
+    bloque, parce qu'il faudrait d'abord revenir sur cette décision.
+  - **La double validation va dans cet ordre : la collègue, puis la direction.** Demander à la
+    direction d'arbitrer un échange que l'intéressée refusera est une perte de temps pour tout le
+    monde. Et **un échange validé ne s'annule plus** : les deux plannings ont changé, deux
+    personnes ont organisé leur semaine autour.
+  - **`swappable_days()` ne renvoie que l'échangeable** — travail, remplacement, repos. Un congé,
+    un arrêt maladie ou un jour d'école n'y figurent pas, et sont donc indistinguables d'une
+    journée sans planning. Même règle que `my_boutique_presence` : on dit qui est là, jamais
+    pourquoi quelqu'un ne l'est pas.
+  - **Un échange échange, il ne pose pas.** `apply_planning_swap` fait changer les deux lignes de
+    propriétaire ; les journées libérées deviennent du repos, sauf quand les deux dates sont la
+    même — deux personnes qui permutent leurs horaires d'une journée n'ont rien à libérer. La
+    marque `swap` sur les lignes rend l'opération idempotente, et `swap` est une source protégée.
+  - **Le banc d'essai rejouait les migrations sur la base de test, et c'était faux.** Un fichier
+    qui s'arrête sur « relation existe déjà » n'exécute pas ce qui suit : une fonction redéfinie
+    par une migration plus récente se retrouvait **rétablie dans sa version d'avant**, et les tests
+    éprouvaient un état que le projet réel n'aura jamais. Un test a échoué sur exactement ça. Le
+    rejeu se fait désormais sur une base à part ; la base de test ne connaît qu'une seule passe,
+    dans l'ordre.
+  - **Le critère d'acceptation Playwright de la Phase 9 (parcours à trois acteurs) est couvert par
+    la suite pgTAP `0011`**, qui joue les trois sessions — demandeuse, collègue, direction — à la
+    couche où vivent les règles. Playwright tourne ici sans base de données ; un vrai parcours à
+    trois exigerait un projet de test et des sessions préparées, ce qui relève de la Phase 11.

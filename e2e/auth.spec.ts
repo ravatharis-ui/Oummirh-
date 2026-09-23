@@ -85,6 +85,21 @@ test.describe("espaces protégés", () => {
     await page.goto("/admin/parametres");
     await expect(page).toHaveURL(/\/admin\/connexion$/);
   });
+
+  test("les échanges de la collaboratrice renvoient vers la connexion", async ({ page }) => {
+    await page.goto("/echanges");
+    await expect(page).toHaveURL(/\/connexion$/);
+  });
+
+  test("les échanges de la direction renvoient vers sa connexion", async ({ page }) => {
+    await page.goto("/admin/echanges");
+    await expect(page).toHaveURL(/\/admin\/connexion$/);
+  });
+
+  test("les remplacements renvoient vers la connexion direction", async ({ page }) => {
+    await page.goto("/admin/remplacements");
+    await expect(page).toHaveURL(/\/admin\/connexion$/);
+  });
 });
 
 test.describe("écran de connexion collaboratrice", () => {

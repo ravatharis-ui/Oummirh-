@@ -44,7 +44,10 @@ if ! $PSQL -c "select 1" >/dev/null 2>&1; then
   echo "  puis supprimez $PGDATA_DIR et relancez." >&2
   exit 1
 fi
-cleanup() { $PSQL -c "drop database if exists $DB_NAME;" >/dev/null 2>&1 || true; }
+cleanup() {
+  $PSQL -c "drop database if exists $DB_NAME;" >/dev/null 2>&1 || true
+  $PSQL -c "drop database if exists replay_check_$$;" >/dev/null 2>&1 || true
+}
 trap cleanup EXIT
 
 $PSQL -c "create database $DB_NAME;" >/dev/null
@@ -61,21 +64,39 @@ done
 # Une migration de schéma échoue forcément au rejeu (« relation existe déjà ») et
 # Supabase ne la rejoue jamais. Ce qui doit tenir, c'est qu'un rejeu manuel depuis
 # l'éditeur SQL — que le guide de déploiement autorise — ne duplique aucune donnée.
+#
+# Le rejeu se fait sur une base **à part**, et c'est important : un fichier qui
+# s'arrête sur « relation existe déjà » n'exécute pas ce qui suit, si bien qu'une
+# fonction redéfinie par une migration plus récente peut se retrouver rétablie
+# dans sa version d'avant. Rejouer sur la base de test revenait donc à éprouver
+# un état que le projet réel n'aura jamais — et c'est exactement ce qui est
+# arrivé : un test a échoué sur une fonction silencieusement revenue en arrière.
 echo "→ Rejeu : les données de référence ne doivent pas se dupliquer"
+REPLAY_DB="replay_check_$$"
+$PSQL -c "create database $REPLAY_DB;" >/dev/null
+$PSQL -d "$REPLAY_DB" -f "$HERE/00-supabase-bootstrap.sql" >/dev/null
+
 REF_TABLES="boutiques contract_types settings public_holidays"
+
+for file in "$ROOT"/supabase/migrations/*.sql; do
+  $PSQL -d "$REPLAY_DB" -f "$file" >/dev/null 2>&1 || true
+done
+
 before=""
 for t in $REF_TABLES; do
-  before="$before $($PSQL -d "$DB_NAME" -tAc "select count(*) from public.$t")"
+  before="$before $($PSQL -d "$REPLAY_DB" -tAc "select count(*) from public.$t")"
 done
 
 for file in "$ROOT"/supabase/migrations/*.sql; do
-  $PSQL -d "$DB_NAME" -f "$file" >/dev/null 2>&1 || true
+  $PSQL -d "$REPLAY_DB" -f "$file" >/dev/null 2>&1 || true
 done
 
 after=""
 for t in $REF_TABLES; do
-  after="$after $($PSQL -d "$DB_NAME" -tAc "select count(*) from public.$t")"
+  after="$after $($PSQL -d "$REPLAY_DB" -tAc "select count(*) from public.$t")"
 done
+
+$PSQL -c "drop database $REPLAY_DB;" >/dev/null 2>&1 || true
 
 if [ "$before" != "$after" ]; then
   echo "   ÉCHEC : le rejeu a modifié les données de référence ($before → $after)" >&2

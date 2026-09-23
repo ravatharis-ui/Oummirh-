@@ -369,6 +369,36 @@ venir.
 
 ---
 
+## Étape 11 — Remplacements et échanges
+
+Toujours pareil : relancez le bouton **« Base de données »** après le déploiement.
+
+### Vérifier un remplacement
+
+1. Espace direction → **Remplacements** → **Remplacement direct**.
+2. Étape 1 : le point de vente qui a besoin de renfort, le jour, les horaires.
+3. Étape 2 : la liste des collaboratrices, avec pour chacune ce qu'elle fait ce jour-là. Celles
+   qui sont en congé apparaissent mais ne sont pas sélectionnables.
+4. Étape 3 : vous relisez, vous confirmez. Elle reçoit une notification et un email.
+5. Regardez son planning : la journée a changé de point de vente.
+6. **Annulez le remplacement** : son planning d'origine revient exactement comme il était.
+
+### Vérifier un échange
+
+Il faut deux téléphones, ou deux navigateurs.
+
+1. Collaboratrice A → **Échanges** : elle choisit une de ses journées, une collègue, et la
+   journée qu'elle veut récupérer. Elle envoie.
+2. Collaboratrice B → **Échanges** : la demande s'affiche en haut, en évidence. Elle accepte.
+3. Espace direction → **Échanges** : l'échange attend votre validation. Vous validez.
+4. Les deux plannings ont changé : A travaille la journée de B, et B celle de A.
+
+Si B refuse, rien ne bouge et A est prévenue. Tant que vous n'avez pas validé, A peut retirer sa
+demande. Une fois validé, l'échange ne s'annule plus — deux personnes ont organisé leur semaine
+autour.
+
+---
+
 ## Ce qui se passe ensuite
 
 À chaque phase terminée, le déroulé est toujours le même :

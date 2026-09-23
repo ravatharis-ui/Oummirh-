@@ -113,6 +113,75 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_replacements: {
+        Row: {
+          boutique_id: string
+          break_end: string | null
+          break_start: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          employee_id: string
+          end_time: string
+          id: string
+          note: string | null
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          boutique_id: string
+          break_end?: string | null
+          break_start?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          date: string
+          employee_id: string
+          end_time: string
+          id?: string
+          note?: string | null
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          boutique_id?: string
+          break_end?: string | null
+          break_start?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          employee_id?: string
+          end_time?: string
+          id?: string
+          note?: string | null
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_replacements_boutique_id_fkey"
+            columns: ["boutique_id"]
+            isOneToOne: false
+            referencedRelation: "boutiques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_replacements_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domain_events: {
         Row: {
           actor_id: string | null
@@ -529,6 +598,41 @@ export type Database = {
           },
         ]
       }
+      planning_snapshots: {
+        Row: {
+          created_at: string
+          date: string
+          employee_id: string
+          entry: Json | null
+          source: string
+          source_ref: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          employee_id: string
+          entry?: Json | null
+          source: string
+          source_ref: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          employee_id?: string
+          entry?: Json | null
+          source?: string
+          source_ref?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_snapshots_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planning_templates: {
         Row: {
           break_end: string | null
@@ -670,6 +774,69 @@ export type Database = {
           {
             foreignKeyName: "recovery_requests_employee_id_fkey"
             columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_swaps: {
+        Row: {
+          admin_comment: string | null
+          admin_decided_at: string | null
+          created_at: string
+          decided_by: string | null
+          id: string
+          message: string | null
+          partner_date: string
+          partner_decided_at: string | null
+          partner_id: string
+          requester_date: string
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_comment?: string | null
+          admin_decided_at?: string | null
+          created_at?: string
+          decided_by?: string | null
+          id?: string
+          message?: string | null
+          partner_date: string
+          partner_decided_at?: string | null
+          partner_id: string
+          requester_date: string
+          requester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_comment?: string | null
+          admin_decided_at?: string | null
+          created_at?: string
+          decided_by?: string | null
+          id?: string
+          message?: string | null
+          partner_date?: string
+          partner_decided_at?: string | null
+          partner_id?: string
+          requester_date?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_swaps_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_swaps_requester_id_fkey"
+            columns: ["requester_id"]
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
@@ -968,6 +1135,61 @@ export type Database = {
         }
         Returns: string
       }
+      admin_cancel_replacement: { Args: { p_id: string }; Returns: undefined }
+      admin_create_replacement: {
+        Args: {
+          p_boutique_id: string
+          p_break_end?: string
+          p_break_start?: string
+          p_date: string
+          p_employee_id: string
+          p_end_time: string
+          p_note?: string
+          p_start_time: string
+        }
+        Returns: string
+      }
+      admin_decide_swap: {
+        Args: { p_approve: boolean; p_comment?: string; p_swap_id: string }
+        Returns: undefined
+      }
+      admin_replacement_candidates: {
+        Args: { p_boutique_id?: string; p_date: string }
+        Returns: {
+          availability: string
+          display_name: string
+          employee_id: string
+          home_boutique: string
+          planned_end: string
+          planned_shop: string
+          planned_start: string
+          planned_status: string
+        }[]
+      }
+      apply_planning_swap: {
+        Args: {
+          p_partner_date: string
+          p_partner_id: string
+          p_requester_date: string
+          p_requester_id: string
+          p_swap_id: string
+        }
+        Returns: boolean
+      }
+      cancel_swap: { Args: { p_swap_id: string }; Returns: undefined }
+      partner_decide_swap: {
+        Args: { p_accept: boolean; p_swap_id: string }
+        Returns: undefined
+      }
+      request_swap: {
+        Args: {
+          p_message?: string
+          p_partner_date: string
+          p_partner_id: string
+          p_requester_date: string
+        }
+        Returns: string
+      }
       admin_upsert_planning_entry: {
         Args: {
           p_boutique_id?: string
@@ -1173,6 +1395,24 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: {
           photo_path: string
+        }[]
+      }
+      swap_colleagues: {
+        Args: never
+        Returns: {
+          boutique_name: string
+          display_name: string
+          employee_id: string
+          same_boutique: boolean
+        }[]
+      }
+      swappable_days: {
+        Args: { p_employee_id: string; p_from?: string; p_to?: string }
+        Returns: {
+          date: string
+          end_time: string
+          start_time: string
+          status: string
         }[]
       }
       verify_employee_pin: {
