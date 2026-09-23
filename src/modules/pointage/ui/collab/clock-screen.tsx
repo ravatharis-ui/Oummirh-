@@ -33,13 +33,33 @@ export function ClockScreen({ state }: { state: ClockState }) {
   const [confirmation, setConfirmation] = useState<ClockRecord | null>(null);
   const [last, setLast] = useState<ClockEventType | null>(state.last);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const pendingRef = useRef<ClockAction | null>(null);
+  const [previewReady, setPreviewReady] = useState(false);
+
+  // A callback ref, not a plain one: the <video> element only exists once the
+  // camera phase has rendered, which happens after start() has returned. Wiring
+  // the stream here means it is attached the moment the element mounts, in any
+  // order.
+  const attachVideo = useCallback((node: HTMLVideoElement | null) => {
+    videoRef.current = node;
+    if (!node) return;
+
+    const stream = streamRef.current;
+    if (!stream) return;
+
+    node.srcObject = stream;
+    void node.play().catch(() => undefined);
+  }, []);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+    setPreviewReady(false);
+
+    const video = videoRef.current;
+    if (video) video.srcObject = null;
   }, []);
 
   // The camera is released when the screen goes away, whatever the reason: a
@@ -98,13 +118,8 @@ export function ClockScreen({ state }: { state: ClockState }) {
       });
 
       streamRef.current = stream;
+      setPreviewReady(false);
       setPhase("camera");
-
-      const video = videoRef.current;
-      if (video) {
-        video.srcObject = stream;
-        await video.play().catch(() => undefined);
-      }
     } catch {
       setCameraDenied(true);
       setPhase("idle");
@@ -118,6 +133,13 @@ export function ClockScreen({ state }: { state: ClockState }) {
     const action = pendingRef.current;
     const video = videoRef.current;
     if (!action || !video) return;
+
+    // A frame with no dimensions would upload a black image — and a selfie can
+    // only be used once, so that pointing would be lost for good.
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setError("La caméra n'est pas encore prête. Attends une seconde et réessaie.");
+      return;
+    }
 
     setPhase("sending");
     setError(null);
@@ -151,14 +173,16 @@ export function ClockScreen({ state }: { state: ClockState }) {
       <div className="flex flex-col items-center gap-4">
         <p className="text-center text-base">Regarde l&apos;objectif, puis valide.</p>
         <video
-          ref={videoRef}
+          ref={attachVideo}
+          autoPlay
           playsInline
           muted
-          className="bg-muted aspect-[3/4] w-full max-w-sm rounded-2xl object-cover"
+          onLoadedMetadata={() => setPreviewReady(true)}
+          className="bg-muted aspect-[3/4] w-full max-w-sm scale-x-[-1] rounded-2xl object-cover"
         />
-        <Button size="lg" className="w-full max-w-sm" onClick={capture}>
+        <Button size="lg" className="w-full max-w-sm" disabled={!previewReady} onClick={capture}>
           <Camera aria-hidden />
-          Prendre la photo et pointer
+          {previewReady ? "Prendre la photo et pointer" : "Caméra en cours d'ouverture…"}
         </Button>
         <Button
           variant="ghost"
