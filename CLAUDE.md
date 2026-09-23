@@ -697,3 +697,23 @@ template` savait appliquer une semaine type que rien ne savait créer. La fermet
   - **Le registre est lu sur les bornes de la période affichée**, et non avec une limite de lignes.
     Une liste tronquée donnerait des « jours acquis » faux — et un compteur faux vaut moins que
     pas de compteur.
+
+- **Remise à zéro avant la mise en boutique** (`scripts/remise-a-zero/`) :
+  - **Les seules suppressions de données du projet vivent hors des migrations.** Une migration se
+    rejoue ; une suppression qui se rejoue effacerait un jour de vraies données. Le banc d'essai et
+    `db push` ne lisent que `supabase/migrations` et `supabase/tests`, donc rien n'exécute jamais
+    ces fichiers tout seul.
+  - **`on delete cascade` rend deux souhaits incompatibles** : supprimer une fiche emporte son
+    planning et ses semaines types. On ne peut pas garder le planning de quelqu'un qu'on supprime.
+    Le chemin recommandé est donc de **garder les fiches, corriger les prénoms et réinitialiser les
+    codes PIN** — même résultat, rien de perdu.
+  - **Le script de suppression de fiches n'a pas de liste par défaut.** Un script qui supprimerait
+    tout le monde si on oublie de le modifier est un piège. Il impose une vérification qui affiche
+    nommément qui partirait et ce que cela emporterait, et son bloc destructeur est commenté.
+  - **`audit_log` et `job_runs` ne sont pas effacés.** Effacer le journal d'audit effacerait la
+    trace de la remise à zéro elle-même ; vider `job_runs` ferait repasser la carte du tableau de
+    bord en « jamais lancée » une nuit entière, pour rien.
+  - **Le SQL ne supprime pas les fichiers.** Les espaces `selfies` et `documents` se vident depuis
+    Storage, sinon les fichiers restent sans que rien ne les référence — donc sans que rien ne
+    puisse plus les supprimer. C'est la même contrainte que celle qui avait imposé la purge en deux
+    temps en Phase 5.
