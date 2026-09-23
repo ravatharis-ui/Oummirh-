@@ -28,7 +28,7 @@ Onglet **Pointer**. Un seul gros bouton, qui dit toujours quoi faire :
 
 La pause est facultative : tu peux passer directement de « Je commence » à « Je termine ».
 
-À l'arrivée, le téléphone demande une photo. Regarde l'objectif, valide. Rien n'est mesuré ni
+À l'arrivée **et au départ**, le téléphone demande une photo. Regarde l'objectif, valide. Rien n'est mesuré ni
 reconnu : c'est juste une preuve de présence, effacée automatiquement au bout de deux mois.
 
 > **L'heure affichée est celle du serveur, pas celle de ton téléphone.** Si ton téléphone avance

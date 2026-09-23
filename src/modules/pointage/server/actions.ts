@@ -6,7 +6,13 @@ import { requireAdmin, requireEmployee } from "@/core/auth";
 import { createServerSupabaseClient } from "@/core/db/server";
 
 import { isClockEventType, type ClockEventType } from "../domain/sequence";
-import { clockEventSchema, correctionSchema, type CorrectionInput } from "../schemas";
+import {
+  clockEventSchema,
+  correctionSchema,
+  photoPathSchema,
+  type CorrectionInput,
+} from "../schemas";
+import { getSelfieUrl } from "./queries";
 import type { ActionResult, ClockRecord } from "../types";
 
 const COLLAB_PATH = "/pointer";
@@ -114,4 +120,22 @@ export async function correctClock(input: CorrectionInput): Promise<ActionResult
   revalidatePath(ADMIN_PATH);
   revalidatePath(`${ADMIN_PATH}/historique`);
   return { ok: true, data: undefined };
+}
+
+/**
+ * A sixty-second link to one selfie, for the direction.
+ *
+ * The link is asked for at the moment of the click and never stored, so there is
+ * nothing to copy out of the page and nothing that still works tomorrow.
+ */
+export async function openSelfie(photoPath: string): Promise<ActionResult<{ url: string }>> {
+  await requireAdmin();
+
+  const parsed = photoPathSchema.safeParse(photoPath);
+  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
+
+  const url = await getSelfieUrl(parsed.data);
+  if (!url) return { ok: false, error: "La photo n'est plus disponible." };
+
+  return { ok: true, data: { url } };
 }

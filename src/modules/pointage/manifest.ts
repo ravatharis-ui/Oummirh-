@@ -3,6 +3,7 @@ import { Clock } from "lucide-react";
 import type { AppModule } from "@/core/modules";
 
 import { pointageEventHandlers } from "./server/handlers";
+import { PresenceWidget } from "./ui/admin/presence-widget";
 
 function name(payload: unknown): string {
   if (typeof payload !== "object" || payload === null) return "Une collaboratrice";
@@ -28,7 +29,7 @@ export const pointageModule: AppModule = {
   name: "Pointage",
   enabled: true,
   description:
-    "La pointeuse : arrivée, pause, départ, avec selfie à l'arrivée. C'est elle qui alimente le suivi des heures.",
+    "La pointeuse : arrivée, pause, départ, avec selfie à l'arrivée et au départ. C'est elle qui alimente le suivi des heures.",
   nav: {
     collab: [{ label: "Pointer", href: "/pointer", icon: Clock, roles: ["employee"] }],
     admin: [{ label: "Pointage", href: "/admin/pointage", icon: Clock, roles: ["admin"] }],
@@ -56,4 +57,5 @@ export const pointageModule: AppModule = {
     },
   ],
   eventHandlers: pointageEventHandlers,
+  dashboardWidgets: { admin: [PresenceWidget] },
 };

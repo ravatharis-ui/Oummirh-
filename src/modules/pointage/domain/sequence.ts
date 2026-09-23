@@ -19,7 +19,11 @@ export interface ClockAction {
   label: string;
   /** One line under it, to remove any doubt about what is being recorded. */
   hint: string;
-  /** A selfie is taken for the arrival only: it is the one that proves presence. */
+  /**
+   * A selfie is taken at the two ends of the day — arrival and departure. They
+   * are what prove presence; the break is a matter between two pointings that
+   * already carry a photo, so it asks for none.
+   */
   needsPhoto: boolean;
 }
 
@@ -46,7 +50,7 @@ const ACTIONS: Record<ClockEventType, ClockAction> = {
     type: "clock_out",
     label: "Je termine",
     hint: "Ta journée sera clôturée.",
-    needsPhoto: false,
+    needsPhoto: true,
   },
 };
 

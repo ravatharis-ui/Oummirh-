@@ -186,16 +186,25 @@ export async function getClockHistory(filters: HistoryFilters = {}): Promise<His
 
   if (filters.employeeId) query = query.eq("employee_id", filters.employeeId);
 
-  const [{ data: rows }, { data: employees }, { data: corrections }] = await Promise.all([
-    query,
-    supabase.from("employees").select("id, display_name, boutique_id").eq("is_active", true),
-    supabase
-      .from("time_clocks")
-      .select("employee_id, local_date")
-      .eq("is_correction", true)
-      .gte("local_date", from)
-      .lte("local_date", to),
-  ]);
+  const [{ data: rows }, { data: employees }, { data: corrections }, { data: photos }] =
+    await Promise.all([
+      query,
+      supabase.from("employees").select("id, display_name, boutique_id").eq("is_active", true),
+      supabase
+        .from("time_clocks")
+        .select("employee_id, local_date")
+        .eq("is_correction", true)
+        .gte("local_date", from)
+        .lte("local_date", to),
+      // Read from the consolidated view: a corrected pointing carries no photo,
+      // so the selfie shown is always the one of the pointing that counts.
+      supabase
+        .from("effective_time_clocks")
+        .select("employee_id, local_date, event_type, photo_path")
+        .not("photo_path", "is", null)
+        .gte("local_date", from)
+        .lte("local_date", to),
+    ]);
 
   const names = new Map((employees ?? []).map((employee) => [employee.id, employee.display_name]));
   const boutiqueOf = new Map(
@@ -203,6 +212,12 @@ export async function getClockHistory(filters: HistoryFilters = {}): Promise<His
   );
   const corrected = new Set(
     (corrections ?? []).map((row) => `${row.employee_id}:${row.local_date}`),
+  );
+  const photoOf = new Map(
+    (photos ?? []).map((row) => [
+      `${row.employee_id}:${row.local_date}:${row.event_type}`,
+      row.photo_path,
+    ]),
   );
 
   return (rows ?? [])
@@ -221,6 +236,8 @@ export async function getClockHistory(filters: HistoryFilters = {}): Promise<His
       arrivalDeltaMinutes: row.arrival_delta_minutes,
       workedMinutes: row.worked_minutes,
       hasCorrection: corrected.has(`${row.employee_id}:${row.local_date}`),
+      arrivalPhotoPath: photoOf.get(`${row.employee_id}:${row.local_date}:clock_in`) ?? null,
+      departurePhotoPath: photoOf.get(`${row.employee_id}:${row.local_date}:clock_out`) ?? null,
     }));
 }
 

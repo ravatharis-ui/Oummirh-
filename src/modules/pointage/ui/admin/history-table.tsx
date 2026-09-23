@@ -12,6 +12,7 @@ import { DELTA_TONE_CLASS, deltaTone, formatDelta } from "../../domain/delta";
 import type { HistoryRow } from "../../types";
 
 import { CorrectionDialog } from "./correction-dialog";
+import { SelfieViewer } from "./selfie-viewer";
 
 function hhmm(instant: string | null): string {
   return instant ? toReunionTimeString(new Date(instant)) : "—";
@@ -82,6 +83,12 @@ export function HistoryTable({ rows }: { rows: HistoryRow[] }) {
                   </td>
                   <td className={cn("py-2 tabular-nums", DELTA_TONE_CLASS[tone])}>
                     {hhmm(row.clockInAt)}
+                    {row.arrivalPhotoPath ? (
+                      <SelfieViewer
+                        photoPath={row.arrivalPhotoPath}
+                        label={`Arrivée de ${row.displayName}`}
+                      />
+                    ) : null}
                     {row.arrivalDeltaMinutes !== null ? (
                       <span className="block text-xs">{formatDelta(row.arrivalDeltaMinutes)}</span>
                     ) : null}
@@ -89,7 +96,15 @@ export function HistoryTable({ rows }: { rows: HistoryRow[] }) {
                   <td className="py-2 tabular-nums">
                     {row.breakStartAt ? `${hhmm(row.breakStartAt)} – ${hhmm(row.breakEndAt)}` : "—"}
                   </td>
-                  <td className="py-2 tabular-nums">{hhmm(row.clockOutAt)}</td>
+                  <td className="py-2 tabular-nums">
+                    {hhmm(row.clockOutAt)}
+                    {row.departurePhotoPath ? (
+                      <SelfieViewer
+                        photoPath={row.departurePhotoPath}
+                        label={`Départ de ${row.displayName}`}
+                      />
+                    ) : null}
+                  </td>
                   <td className="py-2 tabular-nums">
                     {row.workedMinutes === null ? (
                       <span className="text-amber-700">journée non close</span>

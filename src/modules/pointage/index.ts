@@ -31,7 +31,7 @@ export {
 export type { ClockRecord, ClockState, HistoryRow, PresenceRow } from "./types";
 
 export { getClockHistory, getClockState, getPresenceBoard, getSelfieUrl } from "./server/queries";
-export { correctClock, recordClock } from "./server/actions";
+export { correctClock, openSelfie, recordClock } from "./server/actions";
 
 export { ClockScreen } from "./ui/collab/clock-screen";
 export { PresenceBoard } from "./ui/admin/presence-board";

@@ -69,6 +69,8 @@ export default async function PrivacyPage() {
             <strong>Ce n&apos;est pas de la biométrie.</strong> Aucun visage n&apos;est mesuré,
             comparé ni reconnu. L&apos;image n&apos;est jamais analysée par un programme : elle sert
             uniquement à ce qu&apos;une personne puisse, en cas de doute, vérifier qui a pointé.
+            Elle est demandée aux deux bouts de la journée : à l&apos;arrivée et au départ. La pause
+            n&apos;en demande pas.
           </p>
           <p>
             Elle est prise par la caméra frontale, réduite et compressée dans ton téléphone avant

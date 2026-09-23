@@ -33,7 +33,9 @@ describe("nextClockAction", () => {
   it("ne demande de photo que pour l'arrivée", () => {
     expect(nextClockAction(null)?.needsPhoto).toBe(true);
     expect(nextClockAction("clock_in")?.needsPhoto).toBe(false);
-    expect(nextClockAction("break_end")?.needsPhoto).toBe(false);
+    expect(nextClockAction("break_end")?.needsPhoto).toBe(true);
+    // The departure carries a photo too: it is the other end of the day.
+    expect(alternateClockAction("clock_in")?.needsPhoto).toBe(true);
   });
 });
 

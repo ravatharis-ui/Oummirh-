@@ -55,6 +55,10 @@ export interface HistoryRow {
   arrivalDeltaMinutes: number | null;
   workedMinutes: number | null;
   hasCorrection: boolean;
+  /** Selfie of the arrival, if it was taken and not yet purged. */
+  arrivalPhotoPath: string | null;
+  /** Selfie of the departure, same. */
+  departurePhotoPath: string | null;
 }
 
 export type { ActionResult } from "@/core/actions";
